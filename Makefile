@@ -8,6 +8,8 @@ build-server:
 	go build -o build/moon-server cmd/server/main.go
 build-api-test:
 	go build -o build/api-test cmd/test-api/main.go
+build-rpi:
+	GOOS=linux GOARCH=arm go build -o build/moon-server-rpi cmd/server/main.go
 
 run: run-client run-server 
 
@@ -26,3 +28,5 @@ clean-server:
 	rm build/moon-server
 clean-api-test:
 	rm build/api-test
+clean-rpi:
+	rm build/moon-server-rpi

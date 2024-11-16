@@ -10,7 +10,7 @@ import (
 )
 
 func tcpServe(inChannel <-chan *http.Request, outChannel chan<- *http.Response) {
-	listener, err := net.Listen("tcp", "localhost:4040")
+	listener, err := net.Listen("tcp", ":4040")
 	if err != nil {
 		fmt.Println("[ERROR:TCP] ", err)
 		return
