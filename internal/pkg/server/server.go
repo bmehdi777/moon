@@ -8,7 +8,7 @@ import (
 func Run() {
 
 	// channel should be created when tcp connection is created
-	tcpHttpChannel := make(chan *http.Request)
+	tcpHttpChannel := make(chan *http.Response)
 	httpTcpChannel := make(chan *http.Request)
 
 	// tcp connection between client and server

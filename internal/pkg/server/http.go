@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func httpServe(inChannel <-chan *http.Request, outChannel chan<- *http.Request) error {
+func httpServe(inChannel <-chan *http.Response, outChannel chan<- *http.Request) error {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handleAllRequest(w, r, inChannel, outChannel)
 	})
@@ -15,9 +15,14 @@ func httpServe(inChannel <-chan *http.Request, outChannel chan<- *http.Request) 
 	return err
 }
 
-func handleAllRequest(w http.ResponseWriter, r *http.Request, inChannel <-chan *http.Request, outChannel chan<- *http.Request) {
+func handleAllRequest(w http.ResponseWriter, r *http.Request, inChannel <-chan *http.Response, outChannel chan<- *http.Request) {
 	outChannel <- r
-	logRequest(r)
+	//logRequest(r)
+	response := <-inChannel
+	w.Header().Set("Content-Type", response.Header.Get("Content-Type"))
+	w.Header().Set("Content-Length", response.Header.Get("Content-Length"))
+	io.Copy(w, response.Body)
+	response.Body.Close()
 }
 
 func logRequest(r *http.Request) {
@@ -31,6 +36,7 @@ func logRequest(r *http.Request) {
 		fmt.Println("[ERROR]", err.Error)
 		return
 	}
+	r.Body.Close()
 
 	fmt.Println("Body : ", string(bodyBytes))
 }
