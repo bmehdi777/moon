@@ -8,6 +8,11 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 )
 
+type ChannelsHttp struct {
+	RequestChannel chan *http.Request
+	ResponseChannel chan *http.Response
+}
+
 func Run() {
 	db, err := database.InitializeDBConn()
 	if err != nil {
