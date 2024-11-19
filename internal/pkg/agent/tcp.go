@@ -21,11 +21,15 @@ func ConnectToServer(urlTarget *url.URL) error {
 		return errors.New("Can't connect to the server.")
 	}
 	defer conn.Close()
-	httpClient := &http.Client{}
 
+	return handleRequest(conn, urlTarget)
+}
+
+func handleRequest(conn *net.TCPConn, url *url.URL) error {
+	httpClient := &http.Client{}
 	for {
 		msgBytes := make([]byte, 1024)
-		_, err = conn.Read(msgBytes)
+		_, err := conn.Read(msgBytes)
 		if err != nil {
 			return err
 		}
@@ -37,7 +41,7 @@ func ConnectToServer(urlTarget *url.URL) error {
 			return err
 		}
 
-		req.URL = urlTarget
+		req.URL = url
 		req.RequestURI = ""
 
 		// send to urlTarget
@@ -46,7 +50,7 @@ func ConnectToServer(urlTarget *url.URL) error {
 			return err
 		}
 
-		var buf bytes.Buffer;
+		var buf bytes.Buffer
 		err = resp.Write(&buf)
 		if err != nil {
 			return err
