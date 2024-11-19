@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bmehdi777/moon/internal/pkg/client"
+	"github.com/bmehdi777/moon/internal/pkg/agent"
 )
 
 func newCmdStart() *cobra.Command {
@@ -28,7 +28,7 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	err = client.ConnectToServer(urlTarget)
+	err = agent.ConnectToServer(urlTarget)
 	if err != nil {
 		fmt.Println("ERROR : ", err)
 	}

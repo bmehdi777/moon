@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bmehdi777/moon/internal/pkg/client/cmd"
+	"github.com/bmehdi777/moon/internal/pkg/agent/cmd"
 )
 
 func main() {
