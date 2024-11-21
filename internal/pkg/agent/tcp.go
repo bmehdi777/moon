@@ -3,29 +3,28 @@ package agent
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
 )
 
-func ConnectToServer(urlTarget *url.URL) error {
-	serverAddr := "localhost:4040"
-	tcpAddr, err := net.ResolveTCPAddr("tcp", serverAddr)
+func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
+	cert, err := tls.LoadX509KeyPair("certs/client.pem", "certs/client.key")
 	if err != nil {
-		return errors.New("Can't reach the server. Maybe it's down ?")
+		return errors.New("Can't find certificates : " + err.Error())
 	}
-
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	config := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
+	conn, err := tls.Dial("tcp", serverAddrPort, &config)
 	if err != nil {
-		return errors.New("Can't connect to the server.")
+		return errors.New("Can't connect to the server : " + err.Error())
 	}
 	defer conn.Close()
 
 	return handleRequest(conn, urlTarget)
 }
 
-func handleRequest(conn *net.TCPConn, url *url.URL) error {
+func handleRequest(conn *tls.Conn, url *url.URL) error {
 	httpClient := &http.Client{}
 	for {
 		msgBytes := make([]byte, 1024)

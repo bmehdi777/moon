@@ -1,6 +1,6 @@
 .PHONY: build clean
 
-build: build-agent build-server build-api-test
+build: build-agent build-server build-api-test certs
 
 build-agent:
 	go build -o build/moon-agent cmd/agent/main.go
@@ -19,6 +19,10 @@ run-server: build-server
 	./build/moon-server
 run-api-test:
 	./build/api-test
+
+certs:
+	mkdir certs
+	./scripts/makecert.sh
 
 clean: clean-agent clean-server clean-api-test
 

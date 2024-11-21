@@ -3,6 +3,8 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"crypto/rand"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,9 +12,17 @@ import (
 )
 
 func tcpServe(channelsDomains ChannelsDomains) {
-	listener, err := net.Listen("tcp", ":4040")
+	cert, err := tls.LoadX509KeyPair("certs/server.pem", "certs/server.key")
 	if err != nil {
-		fmt.Println("[ERROR:TCP] ", err)
+		fmt.Println("[ERROR:TLS] ", err)
+		return
+	}
+	config := tls.Config{Certificates: []tls.Certificate{cert}}
+	config.Rand = rand.Reader
+
+	listener, err := tls.Listen("tcp", ":4040", &config)
+	if err != nil {
+		fmt.Println("[ERROR:TLS:TCP] ", err)
 		return
 	}
 	defer listener.Close()
@@ -31,10 +41,6 @@ func tcpServe(channelsDomains ChannelsDomains) {
 
 		go handleClient(conn, channelsDomains)
 	}
-}
-
-func negotiateConnection(conn net.Conn) {
-
 }
 
 func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
