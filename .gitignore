@@ -2,4 +2,5 @@ build/*
 certs/*
 
 moon.db
-config
+config.yaml
+config.yml
