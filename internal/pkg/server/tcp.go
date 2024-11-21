@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func tcpServe(inChannel <-chan *http.Request, outChannel chan<- *http.Response) {
+func tcpServe(channelsDomains ChannelsDomains) {
 	listener, err := net.Listen("tcp", ":4040")
 	if err != nil {
 		fmt.Println("[ERROR:TCP] ", err)
@@ -29,17 +29,23 @@ func tcpServe(inChannel <-chan *http.Request, outChannel chan<- *http.Response) 
 			tcpConn.SetKeepAlivePeriod(1 * time.Hour)
 		}
 
-		go handleClient(conn, inChannel, outChannel)
+		go handleClient(conn, channelsDomains)
 	}
 }
 
-func handleClient(conn net.Conn, inChannel <-chan *http.Request, outChannel chan<- *http.Response) {
+func negotiateConnection(conn net.Conn) {
+
+}
+
+func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 	defer conn.Close()
 	fmt.Println("Connection started")
 	respBytes := make([]byte, 1024)
 
 	for {
-		reply := <-inChannel
+		//reply := <-channels.RequestChannel
+		// temp
+		reply := &http.Request{}
 
 		var buf bytes.Buffer
 		err := reply.Write(&buf)
@@ -62,13 +68,16 @@ func handleClient(conn net.Conn, inChannel <-chan *http.Request, outChannel chan
 
 		reader := bytes.NewReader(respBytes)
 		respBufio := bufio.NewReader(reader)
-		resp, err := http.ReadResponse(respBufio, reply)
+		// temp
+		//resp, err := http.ReadResponse(respBufio, reply)
+		_, err = http.ReadResponse(respBufio, reply)
 		if err != nil {
 			fmt.Println("[ERROR:TCP:READER]", err)
 			return
 		}
 
-		outChannel <- resp
+		// temp
+		//channels.ResponseChannel <- resp
 	}
 
 }
