@@ -50,6 +50,9 @@ func tcpServe(channelsDomains ChannelsDomains) {
 
 func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 	defer conn.Close()
+	// create random domain name
+
+
 	log.Printf("Connection started with %v", conn.RemoteAddr())
 	respBytes := make([]byte, 1024)
 
@@ -90,5 +93,5 @@ func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 		// temp
 		//channels.ResponseChannel <- resp
 	}
-
 }
+

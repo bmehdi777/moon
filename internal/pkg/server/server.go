@@ -27,15 +27,11 @@ func Run() {
 
 	channelPerDomain := make(ChannelsDomains)
 
-	// channel should be created when tcp connection is created
-	tcpHttpChannel := make(chan *http.Response)
-	httpTcpChannel := make(chan *http.Request)
-
 	// tcp connection between client and server
 	go tcpServe(channelPerDomain)
 
 	// http connection between server and the world
-	if err := httpServe(tcpHttpChannel, httpTcpChannel, db); err != nil {
+	if err := httpServe(channelPerDomain, db); err != nil {
 		fmt.Println("[ERROR:HTTP] ", err)
 	}
 }
