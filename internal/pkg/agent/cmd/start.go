@@ -18,6 +18,9 @@ func newCmdStart() *cobra.Command {
 		Run:   handlerStart,
 	}
 
+	startCmd.PersistentFlags().String("server-address", "", "Specify the server address to connect")
+	startCmd.PersistentFlags().String("server-port", "", "Specify the server port to connect")
+
 	return &startCmd
 }
 
@@ -28,7 +31,16 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	err = agent.ConnectToServer(urlTarget)
+	addr, _ := cmd.PersistentFlags().GetString("server-address")
+	port, _ := cmd.PersistentFlags().GetString("server-port")
+
+	// debug purpose
+	if addr == "" && port == "" {
+		addr = "localhost"
+		port = "4040"
+	}
+
+	err = agent.ConnectToServer(addr+":"+port, urlTarget)
 	if err != nil {
 		fmt.Println("ERROR : ", err)
 	}
