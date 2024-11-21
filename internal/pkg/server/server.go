@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 )
 
@@ -16,6 +17,8 @@ type ChannelsHttp struct {
 type ChannelsDomains map[string]ChannelsHttp
 
 func Run() {
+	config.InitConfig()
+
 	db, err := database.InitializeDBConn()
 	if err != nil {
 		fmt.Println("Can't connect to the database.")

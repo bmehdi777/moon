@@ -1,2 +1,5 @@
 build/*
 certs/*
+
+moon.db
+config

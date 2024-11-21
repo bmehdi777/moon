@@ -6,31 +6,36 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/bmehdi777/moon/internal/pkg/server/config"
 )
 
 func tcpServe(channelsDomains ChannelsDomains) {
-	cert, err := tls.LoadX509KeyPair("certs/server.pem", "certs/server.key")
+	cert, err := tls.LoadX509KeyPair(config.GlobalConfig.CertPemPath, config.GlobalConfig.CertKeyPath)
 	if err != nil {
-		fmt.Println("[ERROR:TLS] ", err)
+		log.Fatalf("TLS - %v", err)
 		return
 	}
-	config := tls.Config{Certificates: []tls.Certificate{cert}}
-	config.Rand = rand.Reader
+	configTls := tls.Config{Certificates: []tls.Certificate{cert}}
+	configTls.Rand = rand.Reader
 
-	listener, err := tls.Listen("tcp", ":4040", &config)
+	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.TcpAddr, config.GlobalConfig.TcpPort)
+	listener, err := tls.Listen("tcp", fullAddrFmt, &configTls)
 	if err != nil {
-		fmt.Println("[ERROR:TLS:TCP] ", err)
+		log.Fatalf("TLS - TCP - %v", err)
 		return
 	}
 	defer listener.Close()
+	log.Printf("TCP Server is up at %v", fullAddrFmt)
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("[ERROR:TCP:CONN] ", err)
+			log.Fatalf("TCP - CONN - %v", err)
 			continue
 		}
 
@@ -45,7 +50,7 @@ func tcpServe(channelsDomains ChannelsDomains) {
 
 func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 	defer conn.Close()
-	fmt.Println("Connection started")
+	log.Printf("Connection started with %v", conn.RemoteAddr())
 	respBytes := make([]byte, 1024)
 
 	for {
@@ -56,19 +61,19 @@ func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 		var buf bytes.Buffer
 		err := reply.Write(&buf)
 		if err != nil {
-			fmt.Println("[ERROR:TCP:HTTP:REQ] ", err)
+			log.Fatalf("TCP - HTTP - REQ - %v", err)
 			return
 		}
 
 		_, err = conn.Write(buf.Bytes())
 		if err != nil {
-			fmt.Println("[ERROR:TCP:CONN:WRITE] ", err)
+			log.Fatalf("TCP - CONN - WRITE - %v", err)
 			return
 		}
 
 		_, err = conn.Read(respBytes)
 		if err != nil {
-			fmt.Println("[ERROR:TCP:CONN:READ]", err)
+			log.Fatalf("TCP - CONN - READ - %v", err)
 			return
 		}
 
@@ -78,7 +83,7 @@ func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 		//resp, err := http.ReadResponse(respBufio, reply)
 		_, err = http.ReadResponse(respBufio, reply)
 		if err != nil {
-			fmt.Println("[ERROR:TCP:READER]", err)
+			log.Fatalf("TCP - READER - %v", err)
 			return
 		}
 

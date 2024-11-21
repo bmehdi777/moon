@@ -3,8 +3,10 @@ package server
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
+	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 	"gorm.io/gorm"
 )
@@ -14,7 +16,9 @@ func httpServe(inChannel <-chan *http.Response, outChannel chan<- *http.Request,
 		handleAllRequest(w, r, inChannel, outChannel, db)
 	})
 
-	err := http.ListenAndServe(":8080", nil)
+	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.TcpAddr, config.GlobalConfig.HttpPort)
+	log.Printf("HTTP server is up at %v", fullAddrFmt)
+	err := http.ListenAndServe(fullAddrFmt, nil)
 	return err
 }
 
@@ -38,20 +42,4 @@ func handleAllRequest(w http.ResponseWriter, r *http.Request, inChannel <-chan *
 	w.Header().Set("Content-Length", response.Header.Get("Content-Length"))
 	io.Copy(w, response.Body)
 	response.Body.Close()
-}
-
-func logRequest(r *http.Request) {
-	fmt.Println("Headers : ")
-	for key, value := range r.Header {
-		fmt.Println(key, value)
-	}
-
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("[ERROR]", err)
-		return
-	}
-	r.Body.Close()
-
-	fmt.Println("Body : ", string(bodyBytes))
 }
