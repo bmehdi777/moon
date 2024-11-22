@@ -17,8 +17,6 @@ type Config struct {
 	TcpPort string `mapstructure:"server_port"`
 
 	DatabasePath string `mapstructure:"database_path"`
-
-	OvhProvider *OvhProviders `mapstructure:"provider"`
 }
 
 var GlobalConfig Config
@@ -43,9 +41,5 @@ func InitConfig() {
 	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
 		log.Fatalf("Unable to unmarshal config file, %v", err)
-	}
-
-	if GlobalConfig.OvhProvider == nil {
-		log.Fatal("No providers are set. You need to set at least one.")
 	}
 }

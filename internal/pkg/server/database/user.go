@@ -4,14 +4,19 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	Email                string
-	DomainNameAttributed *string
-	ConnectionOpen       bool
+	Email   string
+	Records DomainRecord
 }
 
-func FindUserByDomainName(name string, db *gorm.DB) (*User) {
-	var user User
-	db.First(&user, "DomainNameAttributed = ?", name)
+type DomainRecord struct {
+	gorm.Model
+	DNSRecord string
+	ConnectionOpen  bool
+}
 
-	return &user
+
+func FindDomainRecordByName(name string, db *gorm.DB) *DomainRecord {
+	var record DomainRecord
+	db.First(&record, "DNSRecord = ?", name)
+	return &record
 }

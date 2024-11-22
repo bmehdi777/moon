@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -25,9 +26,20 @@ func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain 
 	// have to ensure request are going to the right chan
 	// so we need to process the domain name
 	hostRequest := r.URL.Host
-	userInfo := database.FindUserByDomainName(hostRequest, db)
-	if userInfo == nil {
-		// domain name doesnt exist
+	record := database.FindDomainRecordByName(hostRequest, db)
+	if record == nil {
+		http.Error(w, "Record not found.", http.StatusNotFound)
+		return
+	}
+
+	if !record.ConnectionOpen {
+		http.Error(w, "Record not found.", http.StatusNotFound)
+		return
+	}
+
+	channel, ok := channelsPerDomain[hostRequest]
+	if !ok {
+		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
@@ -37,10 +49,10 @@ func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain 
 
 	// it's working - just not now
 
-	//outChannel <- r
-	//response := <-inChannel
-	//w.Header().Set("Content-Type", response.Header.Get("Content-Type"))
-	//w.Header().Set("Content-Length", response.Header.Get("Content-Length"))
-	//io.Copy(w, response.Body)
-	//response.Body.Close()
+	channel.RequestChannel <- r
+	response := <-channel.ResponseChannel
+	w.Header().Set("Content-Type", response.Header.Get("Content-Type"))
+	w.Header().Set("Content-Length", response.Header.Get("Content-Length"))
+	io.Copy(w, response.Body)
+	response.Body.Close()
 }
