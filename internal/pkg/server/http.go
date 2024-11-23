@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func httpServe(channelsPerDomain ChannelsDomains, db *gorm.DB) error {
+func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handleAllRequest(w, r, channelsPerDomain, db)
 	})
@@ -22,10 +22,11 @@ func httpServe(channelsPerDomain ChannelsDomains, db *gorm.DB) error {
 	return err
 }
 
-func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain ChannelsDomains, db *gorm.DB) {
+func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain *ChannelsDomains, db *gorm.DB) {
 	// have to ensure request are going to the right chan
 	// so we need to process the domain name
-	hostRequest := r.URL.Host
+	hostRequest := r.Host
+	log.Printf("Host url : %v", hostRequest)
 	record := database.FindDomainRecordByName(hostRequest, db)
 	if record == nil {
 		http.Error(w, "Record not found.", http.StatusNotFound)
@@ -37,7 +38,7 @@ func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain 
 		return
 	}
 
-	channel, ok := channelsPerDomain[hostRequest]
+	channel, ok := (*channelsPerDomain)[hostRequest]
 	if !ok {
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return

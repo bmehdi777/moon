@@ -11,5 +11,13 @@ func InitializeDBConn() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	db.AutoMigrate(&DomainRecord{})
+	db.AutoMigrate(&User{})
+
+	test := User{
+		Email: "mehdi.bentouati",
+	}
+	db.Create(&test)
 	return db, nil
 }

@@ -9,13 +9,6 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 )
 
-type ChannelsHttp struct {
-	RequestChannel  chan *http.Request
-	ResponseChannel chan *http.Response
-}
-
-type ChannelsDomains map[string]ChannelsHttp
-
 func Run() {
 	config.InitConfig()
 
@@ -28,10 +21,36 @@ func Run() {
 	channelPerDomain := make(ChannelsDomains)
 
 	// tcp connection between client and server
-	go tcpServe(channelPerDomain)
+	go tcpServe(&channelPerDomain, db)
 
 	// http connection between server and the world
-	if err := httpServe(channelPerDomain, db); err != nil {
+	if err := httpServe(&channelPerDomain, db); err != nil {
 		fmt.Println("[ERROR:HTTP] ", err)
 	}
 }
+
+type ChannelsHttp struct {
+	RequestChannel  chan *http.Request
+	ResponseChannel chan *http.Response
+}
+
+type ChannelsDomains map[string]ChannelsHttp
+
+func (c *ChannelsDomains) Add(name string) {
+	(*c)[name] = ChannelsHttp{
+		RequestChannel:  make(chan *http.Request),
+		ResponseChannel: make(chan *http.Response),
+	}
+}
+
+func (c *ChannelsDomains) Delete(name string) {
+	delete(*c, name)
+}
+
+func (c *ChannelsDomains) Get(name string) *ChannelsHttp {
+	if channel, found := (*c)[name]; found {
+		return &channel
+	}
+	return nil
+}
+

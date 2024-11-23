@@ -5,18 +5,27 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 	Email   string
-	Records DomainRecord
+	DomainRecordID int
+	DomainRecord DomainRecord
 }
 
 type DomainRecord struct {
 	gorm.Model
-	DNSRecord string
-	ConnectionOpen  bool
+	DNSRecord      string
+	ConnectionOpen bool
 }
 
+func UpdateDomainRecord(domainRec DomainRecord, db *gorm.DB) {
+}
+
+func FindDomainRecordByUserEmail(email string, db *gorm.DB) *DomainRecord {
+	var record DomainRecord
+	db.InnerJoins("User").First(&record, "Email = ?", email)
+	return &record
+}
 
 func FindDomainRecordByName(name string, db *gorm.DB) *DomainRecord {
 	var record DomainRecord
-	db.First(&record, "DNSRecord = ?", name)
+	db.First(&record, "dns_record = ?", name)
 	return &record
 }

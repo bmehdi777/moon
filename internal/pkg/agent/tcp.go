@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"encoding/gob"
 	"errors"
 	"net/http"
 	"net/url"
+
+	"github.com/bmehdi777/moon/internal/pkg/messages"
 )
 
 func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
@@ -25,7 +28,12 @@ func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
 }
 
 func handleRequest(conn *tls.Conn, url *url.URL) error {
+	err := sendAuthMessage(conn)
+	if err != nil {
+		return err
+	}
 	httpClient := &http.Client{}
+
 	for {
 		msgBytes := make([]byte, 1024)
 		_, err := conn.Read(msgBytes)
@@ -60,4 +68,20 @@ func handleRequest(conn *tls.Conn, url *url.URL) error {
 			return err
 		}
 	}
+}
+
+func sendAuthMessage(conn *tls.Conn) error {
+	msg := messages.AuthRequest{
+		Version: '1',
+		Email:   "mehdi.bentouati",
+	}
+	var indexBuffer bytes.Buffer
+	encoder := gob.NewEncoder(&indexBuffer)
+	err := encoder.Encode(&msg)
+	_, err = conn.Write(indexBuffer.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

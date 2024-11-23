@@ -9,7 +9,7 @@ build-server:
 build-api-test:
 	go build -o build/api-test cmd/test-api/main.go
 build-rpi:
-	GOOS=linux GOARCH=arm go build -o build/moon-server-rpi cmd/server/main.go
+	GOOS=linux GOARCH=arm CGO_ENABLED=1 CC=arm-linux-gnu-gcc go build -o build/moon-server-rpi cmd/server/main.go
 
 run: run-agent run-server 
 

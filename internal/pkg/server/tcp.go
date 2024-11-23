@@ -5,16 +5,21 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/bmehdi777/moon/internal/pkg/messages"
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
+	"github.com/bmehdi777/moon/internal/pkg/server/database"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-func tcpServe(channelsDomains ChannelsDomains) {
+func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 	cert, err := tls.LoadX509KeyPair(config.GlobalConfig.CertPemPath, config.GlobalConfig.CertKeyPath)
 	if err != nil {
 		log.Fatalf("TLS - %v", err)
@@ -44,22 +49,29 @@ func tcpServe(channelsDomains ChannelsDomains) {
 			tcpConn.SetKeepAlivePeriod(1 * time.Hour)
 		}
 
-		go handleClient(conn, channelsDomains)
+		go handleClient(conn, channelsDomains, db)
 	}
 }
 
-func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
+func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) {
 	defer conn.Close()
 	// create random domain name
+	channelsName, err := createChannelForUser(conn, channelsDomains, db)
+	if err != nil {
+		log.Fatalf("Error while creating channels : %v", err)
+	}
 
+	channels := channelsDomains.Get(channelsName)
+	if channels == nil {
+		log.Fatalf("Error while retrieving channel.")
+	}
 
 	log.Printf("Connection started with %v", conn.RemoteAddr())
 	respBytes := make([]byte, 1024)
 
 	for {
-		//reply := <-channels.RequestChannel
+		reply := <-channels.RequestChannel
 		// temp
-		reply := &http.Request{}
 
 		var buf bytes.Buffer
 		err := reply.Write(&buf)
@@ -82,16 +94,53 @@ func handleClient(conn net.Conn, channelsDomains ChannelsDomains) {
 
 		reader := bytes.NewReader(respBytes)
 		respBufio := bufio.NewReader(reader)
-		// temp
-		//resp, err := http.ReadResponse(respBufio, reply)
-		_, err = http.ReadResponse(respBufio, reply)
+		resp, err := http.ReadResponse(respBufio, reply)
 		if err != nil {
 			log.Fatalf("TCP - READER - %v", err)
 			return
 		}
 
-		// temp
-		//channels.ResponseChannel <- resp
+		channels.ResponseChannel <- resp
 	}
 }
 
+func createChannelForUser(conn net.Conn, channels *ChannelsDomains, db *gorm.DB) (string, error) {
+	networkBytes := make([]byte, 1024)
+
+	// received auth message
+	_, err := conn.Read(networkBytes)
+	if err != nil {
+		return "", err
+	}
+
+	buf := bytes.NewBuffer(networkBytes)
+	dec := gob.NewDecoder(buf)
+
+	var authRequest messages.AuthRequest
+	err = dec.Decode(&authRequest)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("Email received : %v", authRequest.Email)
+
+	// create domain record in db
+	var user database.User
+	db.First(&user, "Email = ? ", authRequest.Email)
+
+	log.Printf("User get : %v", user)
+
+	dnsRecord := uuid.NewString() + ".m00n.fr"
+	record := database.DomainRecord{
+		DNSRecord:      dnsRecord,
+		ConnectionOpen: true,
+	}
+	db.Model(&user).Update("DomainRecord", record)
+
+	log.Printf("Record created : http://%v", dnsRecord)
+
+	// create channel
+	channels.Add(dnsRecord)
+
+	return dnsRecord, nil
+}
