@@ -130,7 +130,7 @@ func createChannelForUser(conn net.Conn, channels *ChannelsDomains, db *gorm.DB)
 
 	log.Printf("User get : %v", user)
 
-	dnsRecord := uuid.NewString() + ".m00n.fr"
+	dnsRecord := uuid.NewString() + config.GlobalConfig.GlobalDomainName
 	record := database.DomainRecord{
 		DNSRecord:      dnsRecord,
 		ConnectionOpen: true,

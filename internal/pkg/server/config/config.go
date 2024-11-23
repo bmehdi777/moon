@@ -17,6 +17,8 @@ type Config struct {
 	TcpPort string `mapstructure:"server_port"`
 
 	DatabasePath string `mapstructure:"database_path"`
+
+	GlobalDomainName string `mapstructure:"global_domain_name"`
 }
 
 var GlobalConfig Config
@@ -41,5 +43,9 @@ func InitConfig() {
 	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
 		log.Fatalf("Unable to unmarshal config file, %v", err)
+	}
+
+	if GlobalConfig.GlobalDomainName == "" {
+		log.Fatalf("'global_domain_name' can't be empty.")
 	}
 }

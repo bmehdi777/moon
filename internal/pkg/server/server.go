@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -14,7 +14,7 @@ func Run() {
 
 	db, err := database.InitializeDBConn()
 	if err != nil {
-		fmt.Println("Can't connect to the database.")
+		log.Fatalf("Can't connect to the database.")
 		os.Exit(1)
 	}
 
@@ -25,7 +25,7 @@ func Run() {
 
 	// http connection between server and the world
 	if err := httpServe(&channelPerDomain, db); err != nil {
-		fmt.Println("[ERROR:HTTP] ", err)
+		log.Fatalf("Error : %v ", err)
 	}
 }
 
@@ -53,4 +53,3 @@ func (c *ChannelsDomains) Get(name string) *ChannelsHttp {
 	}
 	return nil
 }
-
