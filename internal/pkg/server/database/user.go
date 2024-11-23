@@ -20,7 +20,7 @@ func UpdateDomainRecord(domainRec DomainRecord, db *gorm.DB) {
 
 func FindDomainRecordByUserEmail(email string, db *gorm.DB) *DomainRecord {
 	var record DomainRecord
-	db.InnerJoins("User").First(&record, "Email = ?", email)
+	db.InnerJoins("User").First(&record, "email = ?", email)
 	return &record
 }
 
