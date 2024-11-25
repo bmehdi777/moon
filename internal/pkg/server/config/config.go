@@ -29,6 +29,10 @@ type DatabaseConfig struct {
 
 // use keycloak
 type AuthConfig struct {
+	Realm string `mapstructure:"realm"`
+	BaseURL string `mapstructure:"base_url"`
+	Algorithm string `mapstructure:"algorithm"`
+	Audience string `mapstructure:"audience"`
 }
 
 type Config struct {
@@ -65,7 +69,28 @@ func InitConfig() {
 		log.Fatalf("Unable to unmarshal config file, %v", err)
 	}
 
+	verifyApp()
+	verifyAuth()
+}
+
+
+func verifyApp() {
 	if GlobalConfig.App.GlobalDomainName == "" {
-		log.Fatalf("'global_domain_name' can't be empty.")
+		log.Fatalf("'app.global_domain_name' can't be empty.")
+	}
+}
+
+func verifyAuth() {
+	if GlobalConfig.Auth.Realm == "" {
+		log.Fatalf("'auth.realm' can't be empty.")
+	}
+	if GlobalConfig.Auth.BaseURL == "" {
+		log.Fatalf("'auth.base_url' can't be empty.")
+	}
+	if GlobalConfig.Auth.Algorithm == "" {
+		log.Fatalf("'auth.algorithm' can't be empty.")
+	}
+	if GlobalConfig.Auth.Audience == "" {
+		log.Fatalf("'auth.audience' can't be empty.")
 	}
 }
