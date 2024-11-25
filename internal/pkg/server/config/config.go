@@ -1,5 +1,10 @@
 package config
 
+/*
+*  This file has been place in its own package rather in the server package
+*  to avoid circular import.
+*/
+
 import (
 	"log"
 
