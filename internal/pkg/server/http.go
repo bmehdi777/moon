@@ -16,7 +16,7 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 		handleAllRequest(w, r, channelsPerDomain, db)
 	})
 
-	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.TcpAddr, config.GlobalConfig.HttpPort)
+	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.TcpAddr, config.GlobalConfig.App.HttpPort)
 	log.Printf("HTTP server is up at %v", fullAddrFmt)
 	err := http.ListenAndServe(fullAddrFmt, nil)
 	return err

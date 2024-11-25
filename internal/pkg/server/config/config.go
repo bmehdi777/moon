@@ -6,32 +6,47 @@ import (
 	"github.com/spf13/viper"
 )
 
-
-type Config struct {
+type AppConfig struct {
 	CertKeyPath string `mapstructure:"cert_key"`
 	CertPemPath string `mapstructure:"cert_pub"`
 
 	HttpAddr string `mapstructure:"http_addr"`
 	HttpPort string `mapstructure:"http_port"`
-	TcpAddr string `mapstructure:"server_addr"`
-	TcpPort string `mapstructure:"server_port"`
-
-	DatabasePath string `mapstructure:"database_path"`
+	TcpAddr  string `mapstructure:"server_addr"`
+	TcpPort  string `mapstructure:"server_port"`
 
 	GlobalDomainName string `mapstructure:"global_domain_name"`
+}
+
+type DatabaseConfig struct {
+	Path string `mapstructure:"database_path"`
+}
+
+// use keycloak
+type AuthConfig struct {
+}
+
+type Config struct {
+	App      AppConfig
+	Database DatabaseConfig
+	Auth     AuthConfig
 }
 
 var GlobalConfig Config
 
 func InitConfig() {
 	GlobalConfig = Config{
-		CertKeyPath: "./certs/server.key",
-		CertPemPath: "./certs/server.pem",
-		HttpAddr: "0.0.0.0",
-		HttpPort: "8080",
-		TcpAddr: "0.0.0.0",
-		TcpPort: "4040",
-		DatabasePath: "./moon.db",
+		App: AppConfig{
+			CertKeyPath: "./certs/server.key",
+			CertPemPath: "./certs/server.pem",
+			HttpAddr:    "0.0.0.0",
+			HttpPort:    "8080",
+			TcpAddr:     "0.0.0.0",
+			TcpPort:     "4040",
+		},
+		Database: DatabaseConfig{
+			Path: "./moon.db",
+		},
 	}
 
 	viper.SetConfigName("config")
@@ -45,7 +60,7 @@ func InitConfig() {
 		log.Fatalf("Unable to unmarshal config file, %v", err)
 	}
 
-	if GlobalConfig.GlobalDomainName == "" {
+	if GlobalConfig.App.GlobalDomainName == "" {
 		log.Fatalf("'global_domain_name' can't be empty.")
 	}
 }

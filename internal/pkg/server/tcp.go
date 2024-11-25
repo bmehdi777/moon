@@ -20,7 +20,7 @@ import (
 )
 
 func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
-	cert, err := tls.LoadX509KeyPair(config.GlobalConfig.CertPemPath, config.GlobalConfig.CertKeyPath)
+	cert, err := tls.LoadX509KeyPair(config.GlobalConfig.App.CertPemPath, config.GlobalConfig.App.CertKeyPath)
 	if err != nil {
 		log.Fatalf("Can't load TLS certificates : %v", err)
 		return
@@ -28,7 +28,7 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 	configTls := tls.Config{Certificates: []tls.Certificate{cert}}
 	configTls.Rand = rand.Reader
 
-	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.TcpAddr, config.GlobalConfig.TcpPort)
+	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.TcpAddr, config.GlobalConfig.App.TcpPort)
 	listener, err := tls.Listen("tcp", fullAddrFmt, &configTls)
 	if err != nil {
 		log.Fatalf("Can't setup port :  %v", err)
@@ -139,7 +139,7 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 	// no domain record registered
 	var dnsRecord string
 	if user.DomainRecordID == 0 {
-		dnsRecord = uuid.NewString() + "."+ config.GlobalConfig.GlobalDomainName
+		dnsRecord = uuid.NewString() + "."+ config.GlobalConfig.App.GlobalDomainName
 		record := database.DomainRecord{
 			DNSRecord:      dnsRecord,
 			ConnectionOpen: true,
