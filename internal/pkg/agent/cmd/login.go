@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -32,22 +33,35 @@ func handlerLogin(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	port := listener.Addr().(*net.TCPAddr).Port
-	redirectUri := "http://127.0.0.1:" + strconv.Itoa(port)
-	encodedRedirectUri := url.QueryEscape(redirectUri)
-	loginUri := BASE_URL_KEYCLOAK + "/realms/moon/protocol/openid-connect/auth?client_id=moon-agent&redirect_uri=" + encodedRedirectUri + "&response_type=code&scope=openid"
-
-	fmt.Println("You can connect to : ", loginUri)
+	mux := http.NewServeMux()
+	srv := http.Server{
+		Handler: mux,
+	}
 
 	var authCode string
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Authorization succeed"))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Successfully logged in."))
 		authCode = r.URL.Query().Get("code")
-		//listener.Close()
+		go srv.Shutdown(context.Background())
 	})
-	http.Serve(listener, nil)
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	loginUri := createLoginUri(strconv.Itoa(port))
+	fmt.Println("You can connect to : \n\n", loginUri)
+
+	err = srv.Serve(listener)
+	if err != nil && err != http.ErrServerClosed {
+		fmt.Println("Can't open server on localhost : ", err)
+		os.Exit(1)
+	}
 
 	fmt.Println("Authorization code", authCode)
+}
+
+func createLoginUri(port string) string {
+	redirectUri := "http://127.0.0.1:" + port
+	encodedRedirectUri := url.QueryEscape(redirectUri)
+	return BASE_URL_KEYCLOAK + "/realms/moon/protocol/openid-connect/auth?client_id=moon-agent&redirect_uri=" + encodedRedirectUri + "&response_type=code&scope=openid+email"
 
 }
