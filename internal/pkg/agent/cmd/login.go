@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -27,10 +30,18 @@ func NewCmdLogin() *cobra.Command {
 }
 
 func handlerLogin(cmd *cobra.Command, args []string) {
+	authCode, err := getAuthorizationCode()
+	if err != nil {
+		fmt.Println("An error occured : ", err)
+	}
+
+	fmt.Println("Authorization code : ", authCode)
+}
+
+func getAuthorizationCode() (string, error) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		fmt.Println("Can't open server on localhost : ", err)
-		os.Exit(1)
+		return "", err
 	}
 
 	mux := http.NewServeMux()
@@ -48,15 +59,43 @@ func handlerLogin(cmd *cobra.Command, args []string) {
 
 	port := listener.Addr().(*net.TCPAddr).Port
 	loginUri := createLoginUri(strconv.Itoa(port))
-	fmt.Println("You can connect to : \n\n", loginUri)
+	fmt.Println("If your browser isn't open, you can click on the following link : \n\n", loginUri)
+
+	openInBrowser(loginUri)
 
 	err = srv.Serve(listener)
 	if err != nil && err != http.ErrServerClosed {
-		fmt.Println("Can't open server on localhost : ", err)
-		os.Exit(1)
+		return "", err
 	}
 
-	fmt.Println("Authorization code", authCode)
+	return authCode, nil
+}
+
+func openInBrowser(url string) error {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "linux":
+		cmd = exec.Command("xdg-open", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	}
+
+	if cmd != nil {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Start()
+		if err != nil {
+			return err
+		}
+		err = cmd.Wait()
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return errors.New("Unsupported platform")
+	}
 }
 
 func createLoginUri(port string) string {
