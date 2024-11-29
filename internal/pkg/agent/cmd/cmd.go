@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/bmehdi777/moon/internal/pkg/agent/cmd/login"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +15,7 @@ func newCmdClientRoot() *cobra.Command {
 	}
 
 	rootCmd.AddCommand(newCmdStart())
-	rootCmd.AddCommand(NewCmdLogin())
+	rootCmd.AddCommand(login.NewCmdLogin())
 
 	return &rootCmd
 }
