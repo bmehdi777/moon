@@ -51,6 +51,7 @@ func handlerLogin(cmd *cobra.Command, args []string) {
 	bodyResponse := getToken(authCode, codeVerifier, "http://127.0.0.1:"+port)
 
 	fmt.Println("\nBody response : ", bodyResponse)
+	// now convert the body response to an object and store it somewhere
 }
 
 func getAuthorizationCode(listener net.Listener, port string, challenge string) (string, error) {
@@ -95,7 +96,6 @@ func getToken(authCode string, verifier string, callbackUri string) string {
 	payloadString.WriteString("&code_verifier=" + verifier)
 	payloadString.WriteString("&redirect_uri=" + encodedRedirectUri)
 
-	fmt.Println("DEBUG : ", payloadString.String())
 	payload := strings.NewReader(payloadString.String())
 
 	req, _ := http.NewRequest("POST", url, payload)
@@ -112,7 +112,7 @@ func createLoginUri(challenge string, port string) string {
 	redirectUri := "http://127.0.0.1:" + port
 	encodedRedirectUri := url.QueryEscape(redirectUri)
 
-	return BASE_URL_KEYCLOAK + "/realms/moon/protocol/openid-connect/auth?client_id=moon-agent&redirect_uri=" + encodedRedirectUri + "&response_type=code&scope=openid+email&code_challenge_method=S256&code_challenge=" + challenge
+	return BASE_URL_KEYCLOAK + "/realms/moon/protocol/openid-connect/auth?client_id=moon-agent&redirect_uri=" + encodedRedirectUri + "&response_type=code&code_challenge_method=S256&code_challenge=" + challenge
 }
 
 func openInBrowser(url string) error {
