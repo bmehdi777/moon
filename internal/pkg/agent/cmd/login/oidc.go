@@ -30,7 +30,7 @@ func getAuthorizationCode(listener net.Listener, port string, challenge string) 
 	})
 
 	loginUri := createLoginUri(challenge, port)
-	fmt.Println("If your browser isn't open, you can click on the following link : \n\n", loginUri)
+	fmt.Println("If your browser didn't open, you can click on the following link : \n\n", loginUri)
 
 	openInBrowser(loginUri)
 

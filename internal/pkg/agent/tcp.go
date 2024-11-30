@@ -13,11 +13,8 @@ import (
 )
 
 func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
-	cert, err := tls.LoadX509KeyPair("certs/client.pem", "certs/client.key")
-	if err != nil {
-		return errors.New("Can't find certificates : " + err.Error())
-	}
-	config := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
+	// needed to be changed in prod environment
+	config := tls.Config{InsecureSkipVerify: true}
 	conn, err := tls.Dial("tcp", serverAddrPort, &config)
 	if err != nil {
 		return errors.New("Can't connect to the server : " + err.Error())

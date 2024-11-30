@@ -36,9 +36,9 @@ type AuthConfig struct {
 }
 
 type Config struct {
-	App      AppConfig
-	Database DatabaseConfig
-	Auth     AuthConfig
+	App      AppConfig `mapstructure:"app"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Auth     AuthConfig `mapstructure:"auth"`
 }
 
 var GlobalConfig Config

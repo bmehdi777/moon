@@ -9,7 +9,7 @@ services:
       KC_DB_PASSWORD: keycloak
 
       KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_PORT: 8081
       KC_HOSTNAME_STRICT: 'false'
       KC_HOSTNAME_STRICT_HTTPS: 'false'
 
@@ -22,7 +22,7 @@ services:
     depends_on:
       - keycloakdb
     ports:
-      - '8080:8080'
+      - '8081:8081'
 
 
   keycloakdb:
