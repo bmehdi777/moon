@@ -3,7 +3,7 @@ package login
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -42,7 +42,7 @@ func getAuthorizationCode(listener net.Listener, port string, challenge string) 
 	return authCode, nil
 }
 
-func getToken(authCode string, verifier string, callbackUri string) string {
+func getToken(authCode string, verifier string, callbackUri string) ([]byte, error) {
 	encodedRedirectUri := url.QueryEscape(callbackUri)
 	urlToken := BASE_URL_KEYCLOAK + "/realms/moon/protocol/openid-connect/token"
 
@@ -55,14 +55,18 @@ func getToken(authCode string, verifier string, callbackUri string) string {
 
 	payload := strings.NewReader(payloadString.String())
 
-	req, _ := http.NewRequest("POST", urlToken, payload)
-	req.Header.Add("content-type", "application/x-www-form-urlencoded")
-
-	res, _ := http.DefaultClient.Do(req)
+	res, err := http.Post( urlToken,"application/x-www-form-urlencoded", payload)
+	if err != nil {
+		return nil, err
+	}
 	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
 
-	return string(body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func createLoginUri(challenge string, port string) string {

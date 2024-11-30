@@ -6,8 +6,11 @@ import (
 	"crypto/tls"
 	"encoding/gob"
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
 
 	"github.com/bmehdi777/moon/internal/pkg/messages"
 )
@@ -25,6 +28,8 @@ func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
 }
 
 func handleRequest(conn *tls.Conn, url *url.URL) error {
+	interceptSignal(conn)
+
 	err := sendAuthMessage(conn)
 	if err != nil {
 		return err
@@ -70,7 +75,6 @@ func handleRequest(conn *tls.Conn, url *url.URL) error {
 func sendAuthMessage(conn *tls.Conn) error {
 	msg := messages.AuthRequest{
 		Version: '1',
-		Email:   "mehdi.bentouati",
 	}
 	var indexBuffer bytes.Buffer
 	encoder := gob.NewEncoder(&indexBuffer)
@@ -81,4 +85,15 @@ func sendAuthMessage(conn *tls.Conn) error {
 	}
 
 	return nil
+}
+
+func interceptSignal(conn net.Conn) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+
+		conn.Close()
+		os.Exit(1)
+	}()
 }

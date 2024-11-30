@@ -4,7 +4,6 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	Email   string
 	KCUserId string
 	DomainRecordID int
 	DomainRecord DomainRecord
@@ -14,9 +13,6 @@ type DomainRecord struct {
 	gorm.Model
 	DNSRecord      string
 	ConnectionOpen bool
-}
-
-func UpdateDomainRecord(domainRec DomainRecord, db *gorm.DB) {
 }
 
 func FindDomainRecordByUserEmail(email string, db *gorm.DB) *DomainRecord {

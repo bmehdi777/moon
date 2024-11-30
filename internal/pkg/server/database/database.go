@@ -15,9 +15,9 @@ func InitializeDBConn() (*gorm.DB, error) {
 	db.AutoMigrate(&DomainRecord{})
 	db.AutoMigrate(&User{})
 
-	test := User{
-		Email: "mehdi.bentouati",
-	}
-	db.Create(&test)
+	//test := User{
+	//	KCUserId: "7e4ae9a4-efd8-44e1-8c26-53b0b9d10667",
+	//}
+	//db.Create(&test)
 	return db, nil
 }

@@ -4,8 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/gob"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"net"
@@ -15,6 +18,7 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/messages"
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -129,17 +133,21 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 	if err != nil {
 		return "", err
 	}
+	log.Printf("Access token received : %v", authRequest.AccessTokenJWT)
 
-	log.Printf("Email received : %v", authRequest.Email)
+	//accessToken := verifyJwt(t.AccessToken)
+	//sub, _ := accessToken.Claims.GetSubject()
+	//fmt.Println("sub: ", sub)
+
 
 	// create domain record in db
 	var user database.User
-	db.First(&user, "Email = ? ", authRequest.Email)
+	db.First(&user, "KCUserId = ? ", authRequest.AccessTokenJWT)
 
 	// no domain record registered
 	var dnsRecord string
 	if user.DomainRecordID == 0 {
-		dnsRecord = uuid.NewString() + "."+ config.GlobalConfig.App.GlobalDomainName
+		dnsRecord = uuid.NewString() + "." + config.GlobalConfig.App.GlobalDomainName
 		record := database.DomainRecord{
 			DNSRecord:      dnsRecord,
 			ConnectionOpen: true,
@@ -160,4 +168,31 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 	channels.Add(dnsRecord)
 
 	return dnsRecord, nil
+}
+
+func verifyJwt(tokenStr string) (*jwt.Token, error) {
+	spkiPem := `
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0GGJjxtCXGQgKxwcFZwd2AkNdaPSMN76A5bJyk6Dve8gMi8sbypzKngzhkziqofVe9g5H9kWRyZNIVzKiK4OnFhTRvRtAXoeWj98EINRMmvmWGv5BKwGmfr7g/mVvr+viyROUrrPUWx6TslyVD7VxLFrSchLiAdV6pZdMrKD1tlSXNQ78N3Q2Nw/SmuYd07wBIbtDCTwG9XaCJFaw0jgbKs6wdpTSqkfTNnYE2ekOlI8nAtTwAthjJeIfuPuScG4wVvbTTMx+Hd3z4kU2ripynSOVOWioyWUw6uerJqt1sgclNdQkFwdXgCzcOmJYIt8cOvCm8jEkNPmL3jJMN/eVQIDAQAB
+-----END PUBLIC KEY-----
+	`
+
+	spkiBlock, _ := pem.Decode([]byte(spkiPem))
+	var spkiKey *rsa.PublicKey
+	pubInterface, _ := x509.ParsePKIXPublicKey(spkiBlock.Bytes)
+	spkiKey = pubInterface.(*rsa.PublicKey)
+
+	token, err := jwt.Parse(tokenStr, func(tok *jwt.Token) (interface{}, error) {
+		if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", tok.Header["alg"])
+		}
+
+		return spkiKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
