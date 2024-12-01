@@ -1,4 +1,4 @@
-package agent
+package start
 
 import (
 	"bufio"
@@ -19,7 +19,7 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/messages"
 )
 
-func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
+func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 	tokensCached, err := getReadyForAuth()
 	if err != nil {
 		return err

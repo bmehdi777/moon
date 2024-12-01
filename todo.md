@@ -1,5 +1,6 @@
 # todo
 
+- [ ] Create a protocol to communicate with the server 
 - [ ] Refacto the code to be clearer
 - [ ] The server can see if auth is valid or not : maybe only the server should verify (and no client side verification on `at`)
 - [ ] Create front to register

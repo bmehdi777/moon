@@ -1,4 +1,4 @@
-package cmd
+package start
 
 import (
 	"fmt"
@@ -7,10 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bmehdi777/moon/internal/pkg/agent"
 )
 
-func newCmdStart() *cobra.Command {
+func NewCmdStart() *cobra.Command {
 	startCmd := cobra.Command{
 		Use:   "start <URL>",
 		Short: "Connect <URL> to the world",
@@ -40,7 +39,7 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		port = "4040"
 	}
 
-	err = agent.ConnectToServer(addr+":"+port, urlTarget)
+	err = connectToServer(addr+":"+port, urlTarget)
 	if err != nil {
 		fmt.Println("ERROR : ", err)
 	}
