@@ -15,11 +15,6 @@ type DomainRecord struct {
 	ConnectionOpen bool
 }
 
-func FindDomainRecordByUserEmail(email string, db *gorm.DB) *DomainRecord {
-	var record DomainRecord
-	db.InnerJoins("User").First(&record, "email = ?", email)
-	return &record
-}
 
 func FindDomainRecordByName(name string, db *gorm.DB) *DomainRecord {
 	var record DomainRecord

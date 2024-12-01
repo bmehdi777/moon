@@ -64,6 +64,7 @@ func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) 
 	// create random domain name
 	channelsName, err := createOrSelectChannelForUser(conn, channelsDomains, db)
 	if err != nil {
+		// maybe shouldn't crash but skip this connection ?
 		log.Fatalf("Error while creating channels : %v", err)
 	}
 
@@ -135,14 +136,20 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 	}
 	log.Printf("Access token received : %v", authRequest.AccessTokenJWT)
 
-	//accessToken := verifyJwt(t.AccessToken)
-	//sub, _ := accessToken.Claims.GetSubject()
-	//fmt.Println("sub: ", sub)
+	accessToken, err := verifyJwt(authRequest.AccessTokenJWT)
+	if err != nil {
+		return "", err
+	}
+	sub, err := accessToken.Claims.GetSubject()
+	if err != nil {
+		return "", err
+	}
+	fmt.Println("sub: ", sub)
 
 
 	// create domain record in db
 	var user database.User
-	db.First(&user, "KCUserId = ? ", authRequest.AccessTokenJWT)
+	db.First(&user, "kc_user_id = ? ", sub)
 
 	// no domain record registered
 	var dnsRecord string
