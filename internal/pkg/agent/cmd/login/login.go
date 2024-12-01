@@ -1,16 +1,13 @@
 package login
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/bmehdi777/moon/internal/pkg/agent/files"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 )
@@ -49,26 +46,23 @@ func handlerLogin(cmd *cobra.Command, args []string) {
 		fmt.Println("An error occured while getting token : ", err)
 		os.Exit(1)
 	}
-	//fmt.Println("Token : ", tokenResponse)
-	// now we need to store the access_token and refresh_token on disk
-	var t KeycloakToken
-	err = json.Unmarshal(tokenResponse, &t)
+
+	var keycloakJWT KeycloakJWTS
+	err = json.Unmarshal(tokenResponse, &keycloakJWT)
 	if err != nil {
 		fmt.Println("An error occured while parsing the token ", err)
 		os.Exit(1)
 	}
 
-}
+	diskTokenBytes, err := json.Marshal(keycloakJWT.ToDisk())
+	if err != nil {
+		fmt.Println("Can't parse to json disk token : ", err)
+		os.Exit(1)
+	}
 
-type KeycloakToken struct {
-	AccessToken      string `json:"access_token"`
-	ExpiresIn        int    `json:"expires_in"`
-	RefreshExpiresIn int    `json:"refresh_expires_in"`
-	RefreshToken     string `json:"refresh_token"`
-	TokenType        string `json:"token_type"`
-	IDToken          string `json:"id_token"`
-	NotBeforePolicy  int    `json:"not-before-policy"`
-	SessionState     string `json:"session_state"`
-	Scope            string `json:"scope"`
+	// save cached tokens to disk
+	err = files.SaveToConfigFile(files.AUTH_FILENAME, diskTokenBytes)
+	if err != nil {
+		fmt.Println("Can't save authentification data to disk : ", err)
+	}
 }
-

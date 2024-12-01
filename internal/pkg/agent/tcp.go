@@ -5,13 +5,18 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
+	"time"
 
+	"github.com/bmehdi777/moon/internal/pkg/agent/cmd/login"
+	"github.com/bmehdi777/moon/internal/pkg/agent/files"
 	"github.com/bmehdi777/moon/internal/pkg/messages"
 )
 
@@ -30,7 +35,7 @@ func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
 func handleRequest(conn *tls.Conn, url *url.URL) error {
 	interceptSignal(conn)
 
-	err := sendAuthMessage(conn)
+	err := sendAuth(conn)
 	if err != nil {
 		return err
 	}
@@ -72,13 +77,47 @@ func handleRequest(conn *tls.Conn, url *url.URL) error {
 	}
 }
 
-func sendAuthMessage(conn *tls.Conn) error {
+func sendAuth(conn *tls.Conn) error {
+	/*
+	* Get tokens from cache :
+	* If no auth file exist, user should login
+	* If expires are outdated, remove the cache and user should login
+	* If ANY error, remove the cache file and user should login
+	 */
+
+	if exist := files.IsFromConfigFileExist(files.AUTH_FILENAME); !exist {
+		return errors.New("No session exist.\n\nUse 'moon login' before starting a tunnel.")
+	}
+
+	tokensCachedBytes, err := files.ReadFromConfigFile(files.AUTH_FILENAME)
+	if err != nil {
+		return err
+	}
+
+	var tokensCached login.TokenDisk
+	err = json.Unmarshal(tokensCachedBytes, &tokensCached)
+	if err != nil {
+		return errors.New("Can't parse auth file. It should be a JSON file.")
+	}
+
+	n := time.Now()
+	atExpTimestamp := time.Unix(tokensCached.AccessTokenExpire, 0)
+	rtExpTimestamp := time.Unix(tokensCached.RefreshTokenExpire, 0)
+
+	if n.After(atExpTimestamp) && n.After(rtExpTimestamp) {
+		fmt.Println("Your session expired. Use 'moon login' to start a new session.")
+	} else if n.After(atExpTimestamp) && n.Before(rtExpTimestamp) {
+		// TODO: here we should ask another access token with the refresh token
+	}
+
+	// send the message to the server
 	msg := messages.AuthRequest{
 		Version: '1',
+		AccessTokenJWT: tokensCached.AccessToken,
 	}
 	var indexBuffer bytes.Buffer
 	encoder := gob.NewEncoder(&indexBuffer)
-	err := encoder.Encode(&msg)
+	err = encoder.Encode(&msg)
 	_, err = conn.Write(indexBuffer.Bytes())
 	if err != nil {
 		return err
