@@ -7,7 +7,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -21,6 +20,10 @@ import (
 )
 
 func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
+	tokensCached, err := getReadyForAuth()
+	if err != nil {
+		return err
+	}
 	// needed to be changed in prod environment
 	config := tls.Config{InsecureSkipVerify: true}
 	conn, err := tls.Dial("tcp", serverAddrPort, &config)
@@ -29,16 +32,18 @@ func ConnectToServer(serverAddrPort string, urlTarget *url.URL) error {
 	}
 	defer conn.Close()
 
+	// TODO: fix ctrl-c doesnt close connection (precisely, it close but still use it afterwards)
+	interceptSignal(conn)
+
+	err = sendAuth(conn, *tokensCached)
+	if err != nil {
+		return err
+	}
+
 	return handleRequest(conn, urlTarget)
 }
 
 func handleRequest(conn *tls.Conn, url *url.URL) error {
-	interceptSignal(conn)
-
-	err := sendAuth(conn)
-	if err != nil {
-		return err
-	}
 	httpClient := &http.Client{}
 
 	for {
@@ -77,7 +82,7 @@ func handleRequest(conn *tls.Conn, url *url.URL) error {
 	}
 }
 
-func sendAuth(conn *tls.Conn) error {
+func getReadyForAuth() (*login.TokenDisk, error) {
 	/*
 	* Get tokens from cache :
 	* If no auth file exist, user should login
@@ -86,18 +91,18 @@ func sendAuth(conn *tls.Conn) error {
 	 */
 
 	if exist := files.IsFromConfigFileExist(files.AUTH_FILENAME); !exist {
-		return errors.New("No session exist.\n\nUse 'moon login' before starting a tunnel.")
+		return nil, errors.New("No session exist.\n\nUse 'moon login' before starting a tunnel.")
 	}
 
 	tokensCachedBytes, err := files.ReadFromConfigFile(files.AUTH_FILENAME)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var tokensCached login.TokenDisk
 	err = json.Unmarshal(tokensCachedBytes, &tokensCached)
 	if err != nil {
-		return errors.New("Can't parse auth file. It should be a JSON file.")
+		return nil, errors.New("Can't parse auth file. It should be a JSON file.")
 	}
 
 	n := time.Now()
@@ -105,19 +110,23 @@ func sendAuth(conn *tls.Conn) error {
 	rtExpTimestamp := time.Unix(tokensCached.RefreshTokenExpire, 0)
 
 	if n.After(atExpTimestamp) && n.After(rtExpTimestamp) {
-		fmt.Println("Your session expired. Use 'moon login' to start a new session.")
+		return nil, errors.New("Your session expired. Use 'moon login' to start a new session.")
 	} else if n.After(atExpTimestamp) && n.Before(rtExpTimestamp) {
 		// TODO: here we should ask another access token with the refresh token
 	}
+	return &tokensCached, nil
+}
+
+func sendAuth(conn *tls.Conn, tokensCached login.TokenDisk) error {
 
 	// send the message to the server
 	msg := messages.AuthRequest{
-		Version: '1',
+		Version:        '1',
 		AccessTokenJWT: tokensCached.AccessToken,
 	}
 	var indexBuffer bytes.Buffer
 	encoder := gob.NewEncoder(&indexBuffer)
-	err = encoder.Encode(&msg)
+	err := encoder.Encode(&msg)
 	_, err = conn.Write(indexBuffer.Bytes())
 	if err != nil {
 		return err
