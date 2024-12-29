@@ -12,7 +12,7 @@ var PacketVersionIncompatible = fmt.Errorf("Packet version are incompatible - cu
 type MessageType uint8
 
 const (
-	ConnectionOpen MessageType = iota
+	ConnectionStart MessageType = iota
 	ConnectionClose
 )
 
@@ -31,8 +31,8 @@ func (p *Packet) ToByte() []byte {
 		byte(p.Type),
 	}
 
-	binary.BigEndian.AppendUint32(buffer, p.LenToken)
-	binary.BigEndian.AppendUint32(buffer, p.LenData)
+	buffer = binary.BigEndian.AppendUint32(buffer, p.LenToken)
+	buffer = binary.BigEndian.AppendUint32(buffer, p.LenData)
 
 	buffer = append(buffer, []byte(p.Token)...)
 	buffer = append(buffer, p.Data...)
@@ -41,13 +41,23 @@ func (p *Packet) ToByte() []byte {
 }
 
 func PacketFromBytes(data []byte) (*Packet, error) {
+
 	version := uint8(data[0])
 	msgType := MessageType(data[1])
-	lenToken := binary.BigEndian.Uint32(data[2:5])
-	lenData := binary.BigEndian.Uint32(data[6:9])
-	tokenOffset := 10 + lenToken - 1
-	token := string(data[10:tokenOffset])
-	payload := data[tokenOffset+1:]
+	lenToken := binary.BigEndian.Uint32(data[2:6])
+	lenData := binary.BigEndian.Uint32(data[6:10])
+
+	var tokenOffset uint32 = 11
+	var token string
+	if lenToken != 0 {
+		tokenOffset = 11 + lenToken - 1
+		token = string(data[11:tokenOffset])
+	}
+
+	var payload []byte
+	if lenData != 0 {
+		payload = data[tokenOffset+1:]
+	}
 
 	if version != VERSION {
 		return nil, PacketVersionIncompatible

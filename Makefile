@@ -34,3 +34,6 @@ clean-api-test:
 	rm build/api-test
 clean-rpi:
 	rm build/moon-server-rpi
+
+test:
+	go test -v ./internal/pkg/communication
