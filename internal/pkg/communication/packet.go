@@ -14,6 +14,7 @@ type MessageType uint8
 const (
 	ConnectionStart MessageType = iota
 	ConnectionClose
+	HttpRequest
 )
 
 type Packet struct {
