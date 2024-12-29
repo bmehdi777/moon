@@ -62,3 +62,12 @@ func TestByteToPacket(t *testing.T) {
 		t.Fatalf("Bytes to packet conversion isn't working. Got : %#v \nExpected : %#v", p, expected)
 	}
 }
+
+func TestIncompatibleVersion(t *testing.T) {
+	rawPacket := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+	_, err := communication.PacketFromBytes(rawPacket)
+	if err == nil {
+		t.Fatalf("An error should have been thrown")
+	}
+}

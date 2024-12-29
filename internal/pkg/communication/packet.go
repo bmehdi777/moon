@@ -41,7 +41,6 @@ func (p *Packet) ToByte() []byte {
 }
 
 func PacketFromBytes(data []byte) (*Packet, error) {
-
 	version := uint8(data[0])
 	msgType := MessageType(data[1])
 	lenToken := binary.BigEndian.Uint32(data[2:6])
