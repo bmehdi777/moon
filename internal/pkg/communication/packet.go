@@ -26,7 +26,20 @@ type Packet struct {
 	Data     []byte
 }
 
-func (p *Packet) ToByte() []byte {
+func NewPacket(msgType MessageType, token string, data []byte) *Packet {
+	packet := Packet{
+		Version:  VERSION,
+		Type:     msgType,
+		LenToken: uint32(len(token)),
+		LenData:  uint32(len(data)),
+		Token:    token,
+		Data:     data,
+	}
+
+	return &packet
+}
+
+func (p *Packet) Bytes() []byte {
 	buffer := []byte{
 		VERSION,
 		byte(p.Type),

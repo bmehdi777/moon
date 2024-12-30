@@ -16,7 +16,7 @@ import (
 
 	"github.com/bmehdi777/moon/internal/pkg/agent/cmd/login"
 	"github.com/bmehdi777/moon/internal/pkg/agent/files"
-	"github.com/bmehdi777/moon/internal/pkg/messages"
+	"github.com/bmehdi777/moon/internal/pkg/communication"
 )
 
 func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
@@ -31,11 +31,12 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 		return errors.New("Can't connect to the server : " + err.Error())
 	}
 	defer conn.Close()
+	client := communication.NewClient(conn, tokensCached.AccessToken)
 
 	// TODO: fix ctrl-c doesnt close connection (precisely, it close but still use it afterwards)
-	interceptSignal(conn)
+	interceptSignal(&client)
 
-	err = sendAuth(conn, *tokensCached)
+	err = client.SendConnectionStart()
 	if err != nil {
 		return err
 	}
@@ -117,31 +118,14 @@ func getReadyForAuth() (*login.TokenDisk, error) {
 	return &tokensCached, nil
 }
 
-func sendAuth(conn *tls.Conn, tokensCached login.TokenDisk) error {
-
-	// send the message to the server
-	msg := messages.AuthRequest{
-		Version:        '1',
-		AccessTokenJWT: tokensCached.AccessToken,
-	}
-	var indexBuffer bytes.Buffer
-	encoder := gob.NewEncoder(&indexBuffer)
-	err := encoder.Encode(&msg)
-	_, err = conn.Write(indexBuffer.Bytes())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func interceptSignal(conn net.Conn) {
+func interceptSignal(client *communication.Client) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
 
-		conn.Close()
+		client.SendConnectionClose()
+		client.Connection.Close()
 		os.Exit(1)
 	}()
 }
