@@ -29,9 +29,8 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 		return errors.New("Can't connect to the server : " + err.Error())
 	}
 	defer conn.Close()
-	client := communication.NewClient(conn, tokensCached.AccessToken)
+	client := communication.NewClient(conn, &tokensCached.AccessToken)
 
-	// TODO: fix ctrl-c doesnt close connection (precisely, it close but still use it afterwards)
 	interceptSignal(client)
 
 	err = client.SendConnectionStart()
@@ -46,21 +45,13 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 	httpClient := &http.Client{}
 
 	for {
-		msgBytes := make([]byte, 1024)
-		_, err := client.Connection.Read(msgBytes)
-		if err != nil {
-			return err
-		}
-		packetRequest, err := communication.PacketFromBytes(msgBytes)
-		if err != nil {
-			return err
-		}
-		if packetRequest.Type != communication.HttpRequest {
+		packetRequest, err := client.Read()
+		if packetRequest.Header.Type != communication.HttpRequest {
 			// skip this packet if it isn't a request
 			continue
 		}
 
-		reader := bytes.NewReader(packetRequest.Data)
+		reader := bytes.NewReader(packetRequest.Payload.Data)
 		msgBufio := bufio.NewReader(reader)
 		req, err := http.ReadRequest(msgBufio)
 		if err != nil {

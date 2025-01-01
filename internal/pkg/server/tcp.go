@@ -52,16 +52,17 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 			tcpConn.SetKeepAlivePeriod(1 * time.Hour)
 		}
 
-		go handleClient(conn, channelsDomains, db)
+		client := communication.NewClient(conn.(*tls.Conn), nil)
+		go handleClient(client, channelsDomains, db)
 	}
 }
 
-func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) {
+func handleClient(client *communication.Client, channelsDomains *ChannelsDomains, db *gorm.DB) {
 	// defer aren't working, search why
-	defer conn.Close()
-	defer log.Printf("Connection closed with %v", conn.RemoteAddr())
+	defer client.Connection.Close()
+	defer log.Printf("Connection closed with %v", client.Connection.RemoteAddr())
 	// create random domain name
-	channelsName, err := createOrSelectChannelForUser(conn, channelsDomains, db)
+	channelsName, err := createOrSelectChannelForUser(client, channelsDomains, db)
 	if err != nil {
 		// maybe shouldn't crash but skip this connection ?
 		log.Fatalf("Error while creating channels : %v", err)
@@ -75,13 +76,21 @@ func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) 
 	defer channelsDomains.Delete(channelsName)
 	defer db.Model(&database.DomainRecord{}).Where("dns_record = ?", channelsName).Update("connection_open", false)
 
-	log.Printf("Connection started with %v", conn.RemoteAddr())
-	respBytes := make([]byte, 1024)
-
+	log.Printf("Connection started with %v", client.Connection.RemoteAddr())
+	var reply *http.Request
+	readChan := make(chan *communication.Packet)
 	for {
+		go func() {
+			responsePacket, err := client.Read()
+			if err != nil {
+				log.Fatalf("Error while reading response from %v : %v", client.Connection.RemoteAddr(), err)
+				return
+			}
+			readChan <- responsePacket
+		}()
+
 		select {
-		// getting request from HTTP thread
-		case reply := <-channels.RequestChannel:
+		case reply = <-channels.RequestChannel:
 			var buf bytes.Buffer
 			err := reply.Write(&buf)
 			if err != nil {
@@ -90,40 +99,22 @@ func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) 
 			}
 			bufBytes := buf.Bytes()
 
-			packet := communication.Packet{
-				Version:  communication.VERSION,
-				Type:     communication.HttpRequest,
-				LenToken: 0,
-				LenData:  uint32(len(bufBytes)),
-				Data:     bufBytes,
-			}
-
 			// redirecting HTTP request to TCP connection
-			_, err = conn.Write(packet.Bytes())
+			err = client.SendHttpRequest(bufBytes)
 			if err != nil {
-				log.Fatalf("Error while sending bytes to %v : %v", conn.RemoteAddr(), err)
+				log.Fatalf("Error while sending bytes to %v : %v", client.Connection.RemoteAddr(), err)
 				return
 			}
-
-			_, err = conn.Read(respBytes)
-			if err != nil {
-				log.Fatalf("Error while reading response from %v : %v", conn.RemoteAddr(), err)
-				return
-			}
-			responsePacket, err := communication.PacketFromBytes(respBytes)
-			if err != nil {
-				log.Fatalf("Error while converting bytes to packet.")
-				return
-			}
+		case response := <-readChan:
 
 			// move in a function
-			switch responsePacket.Type {
+			switch response.Header.Type {
 			case communication.ConnectionClose:
 				fmt.Println("closing conn")
 				// it will automically conn.close
 				return
 			case communication.HttpResponse:
-				reader := bytes.NewReader(responsePacket.Data)
+				reader := bytes.NewReader(response.Payload.Data)
 				respBufio := bufio.NewReader(reader)
 				resp, err := http.ReadResponse(respBufio, reply)
 				if err != nil {
@@ -134,56 +125,24 @@ func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) 
 			default:
 				log.Fatalf("Weird packet received. Skipping it.")
 			}
-		default:
-			// need to be put in a function
-
-			// reading response
-			_, err = conn.Read(respBytes)
-			if err != nil {
-				log.Fatalf("Error while reading response from %v : %v", conn.RemoteAddr(), err)
-				return
-			}
-			responsePacket, err := communication.PacketFromBytes(respBytes)
-			if err != nil {
-				log.Fatalf("Error while converting bytes to packet.")
-				return
-			}
-
-			// move in a function
-			switch responsePacket.Type {
-			case communication.ConnectionClose:
-				fmt.Println("closing conn")
-				// it will automically conn.close
-				return
-			default:
-				log.Fatalf("Weird packet received. Skipping it.")
-			}
 		}
-
 	}
 }
 
-func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *gorm.DB) (string, error) {
-	networkBytes := make([]byte, 1024)
-
+func createOrSelectChannelForUser(client *communication.Client, channels *ChannelsDomains, db *gorm.DB) (string, error) {
 	// received auth message
-	_, err := conn.Read(networkBytes)
+	packet, err := client.Read()
 	if err != nil {
 		return "", err
 	}
 
-	packet, err := communication.PacketFromBytes(networkBytes)
-	if err != nil {
-		return "", err
-	}
-
-	if packet.Type != communication.ConnectionStart {
+	if packet.Header.Type != communication.ConnectionStart {
 		return "", fmt.Errorf("Can't start a connection")
 	}
 
 	log.Printf("Packet received : %#v", packet)
 
-	accessToken, err := verifyJwt(packet.Token)
+	accessToken, err := verifyJwt(packet.Payload.Token)
 	if err != nil {
 		return "", err
 	}
