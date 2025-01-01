@@ -4,10 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
-	"encoding/gob"
 	"encoding/json"
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -34,7 +32,7 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 	client := communication.NewClient(conn, tokensCached.AccessToken)
 
 	// TODO: fix ctrl-c doesnt close connection (precisely, it close but still use it afterwards)
-	interceptSignal(&client)
+	interceptSignal(client)
 
 	err = client.SendConnectionStart()
 	if err != nil {

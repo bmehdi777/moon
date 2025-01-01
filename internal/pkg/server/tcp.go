@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/gob"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -15,7 +14,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bmehdi777/moon/internal/pkg/messages"
+	"github.com/bmehdi777/moon/internal/pkg/communication"
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 	"github.com/golang-jwt/jwt/v5"
@@ -126,17 +125,18 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 		return "", err
 	}
 
-	buf := bytes.NewBuffer(networkBytes)
-	dec := gob.NewDecoder(buf)
-
-	var authRequest messages.AuthRequest
-	err = dec.Decode(&authRequest)
+	packet, err := communication.PacketFromBytes(networkBytes)
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Access token received : %v", authRequest.AccessTokenJWT)
 
-	accessToken, err := verifyJwt(authRequest.AccessTokenJWT)
+	if packet.Type != communication.ConnectionStart {
+		return "", fmt.Errorf("Can't start a connection")
+	}
+
+	log.Printf("Packet received : %#v", packet)
+
+	accessToken, err := verifyJwt(packet.Token)
 	if err != nil {
 		return "", err
 	}
@@ -145,7 +145,6 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 		return "", err
 	}
 	fmt.Println("sub: ", sub)
-
 
 	// create domain record in db
 	var user database.User
@@ -178,6 +177,7 @@ func createOrSelectChannelForUser(conn net.Conn, channels *ChannelsDomains, db *
 }
 
 func verifyJwt(tokenStr string) (*jwt.Token, error) {
+	// local cert for testing purpose
 	spkiPem := `
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0GGJjxtCXGQgKxwcFZwd2AkNdaPSMN76A5bJyk6Dve8gMi8sbypzKngzhkziqofVe9g5H9kWRyZNIVzKiK4OnFhTRvRtAXoeWj98EINRMmvmWGv5BKwGmfr7g/mVvr+viyROUrrPUWx6TslyVD7VxLFrSchLiAdV6pZdMrKD1tlSXNQ78N3Q2Nw/SmuYd07wBIbtDCTwG9XaCJFaw0jgbKs6wdpTSqkfTNnYE2ekOlI8nAtTwAthjJeIfuPuScG4wVvbTTMx+Hd3z4kU2ripynSOVOWioyWUw6uerJqt1sgclNdQkFwdXgCzcOmJYIt8cOvCm8jEkNPmL3jJMN/eVQIDAQAB

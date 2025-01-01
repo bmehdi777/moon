@@ -36,7 +36,7 @@ func TestPacketToByte(t *testing.T) {
 		Data:     data,
 	}
 
-	pBytes := p.ToByte()
+	pBytes := p.Bytes()
 
 	if !bytes.Equal(pBytes, expected) {
 		t.Fatalf("Packets to bytes conversion isn't working. Got : %d \nExpected : %d", pBytes, expected)

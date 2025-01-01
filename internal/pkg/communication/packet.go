@@ -60,11 +60,11 @@ func PacketFromBytes(data []byte) (*Packet, error) {
 	lenToken := binary.BigEndian.Uint32(data[2:6])
 	lenData := binary.BigEndian.Uint32(data[6:10])
 
-	var tokenOffset uint32 = 11
+	var tokenOffset uint32 = 10
 	var token string
 	if lenToken != 0 {
-		tokenOffset = 11 + lenToken - 1
-		token = string(data[11:tokenOffset])
+		tokenOffset = 10 + lenToken
+		token = string(data[10:tokenOffset])
 	}
 
 	var payload []byte
