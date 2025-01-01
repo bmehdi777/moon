@@ -79,40 +79,87 @@ func handleClient(conn net.Conn, channelsDomains *ChannelsDomains, db *gorm.DB) 
 	respBytes := make([]byte, 1024)
 
 	for {
+		select {
 		// getting request from HTTP thread
-		reply := <-channels.RequestChannel
+		case reply := <-channels.RequestChannel:
+			var buf bytes.Buffer
+			err := reply.Write(&buf)
+			if err != nil {
+				log.Fatalf("Error while writing request to wire : %v", err)
+				return
+			}
+			bufBytes := buf.Bytes()
 
-		var buf bytes.Buffer
-		err := reply.Write(&buf)
-		if err != nil {
-			log.Fatalf("Error while writing request to wire : %v", err)
-			return
+			packet := communication.Packet{
+				Version:  communication.VERSION,
+				Type:     communication.HttpRequest,
+				LenToken: 0,
+				LenData:  uint32(len(bufBytes)),
+				Data:     bufBytes,
+			}
+
+			// redirecting HTTP request to TCP connection
+			_, err = conn.Write(packet.Bytes())
+			if err != nil {
+				log.Fatalf("Error while sending bytes to %v : %v", conn.RemoteAddr(), err)
+				return
+			}
+
+			_, err = conn.Read(respBytes)
+			if err != nil {
+				log.Fatalf("Error while reading response from %v : %v", conn.RemoteAddr(), err)
+				return
+			}
+			responsePacket, err := communication.PacketFromBytes(respBytes)
+			if err != nil {
+				log.Fatalf("Error while converting bytes to packet.")
+				return
+			}
+
+			// move in a function
+			switch responsePacket.Type {
+			case communication.ConnectionClose:
+				fmt.Println("closing conn")
+				// it will automically conn.close
+				return
+			case communication.HttpResponse:
+				reader := bytes.NewReader(responsePacket.Data)
+				respBufio := bufio.NewReader(reader)
+				resp, err := http.ReadResponse(respBufio, reply)
+				if err != nil {
+					log.Fatalf("Error while converting bytes to HTTP response %v", err)
+					return
+				}
+				channels.ResponseChannel <- resp
+			default:
+				log.Fatalf("Weird packet received. Skipping it.")
+			}
+		default:
+			// need to be put in a function
+
+			// reading response
+			_, err = conn.Read(respBytes)
+			if err != nil {
+				log.Fatalf("Error while reading response from %v : %v", conn.RemoteAddr(), err)
+				return
+			}
+			responsePacket, err := communication.PacketFromBytes(respBytes)
+			if err != nil {
+				log.Fatalf("Error while converting bytes to packet.")
+				return
+			}
+
+			// move in a function
+			switch responsePacket.Type {
+			case communication.ConnectionClose:
+				fmt.Println("closing conn")
+				// it will automically conn.close
+				return
+			default:
+				log.Fatalf("Weird packet received. Skipping it.")
+			}
 		}
 
-		// redirecting HTTP request to TCP connection
-		_, err = conn.Write(buf.Bytes())
-		if err != nil {
-			log.Fatalf("Error while sending bytes to %v : %v", conn.RemoteAddr(), err)
-			return
-		}
-
-		// reading response
-		_, err = conn.Read(respBytes)
-		if err != nil {
-			log.Fatalf("Error while reading response from %v : %v", conn.RemoteAddr(), err)
-			return
-		}
-
-		reader := bytes.NewReader(respBytes)
-		respBufio := bufio.NewReader(reader)
-		resp, err := http.ReadResponse(respBufio, reply)
-		if err != nil {
-			log.Fatalf("Error while converting bytes to HTTP response %v", err)
-			return
-		}
-
-		// sending response to HTTP thread
-		channels.ResponseChannel <- resp
 	}
 }
 

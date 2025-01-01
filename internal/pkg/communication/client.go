@@ -2,6 +2,7 @@ package communication
 
 import (
 	"crypto/tls"
+	"fmt"
 )
 
 type Client struct {
@@ -31,6 +32,7 @@ func (c *Client) SendConnectionStart() error {
 }
 
 func (c *Client) SendConnectionClose() error {
+	fmt.Println("Closing connection")
 	packet := NewPacket(ConnectionClose, c.AccessToken, nil)
 	err := c.sendPacket(packet)
 	if err != nil {
@@ -41,6 +43,15 @@ func (c *Client) SendConnectionClose() error {
 
 func (c *Client) SendHttpRequest(data []byte) error {
 	packet := NewPacket(HttpRequest, c.AccessToken, data)
+	err := c.sendPacket(packet)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) SendHttpResponse(data []byte) error {
+	packet := NewPacket(HttpResponse, c.AccessToken, data)
 	err := c.sendPacket(packet)
 	if err != nil {
 		return err

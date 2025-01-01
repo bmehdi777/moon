@@ -15,6 +15,7 @@ const (
 	ConnectionStart MessageType = iota
 	ConnectionClose
 	HttpRequest
+	HttpResponse
 )
 
 type Packet struct {

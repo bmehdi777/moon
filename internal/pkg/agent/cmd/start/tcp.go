@@ -39,20 +39,28 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 		return err
 	}
 
-	return handleRequest(conn, urlTarget)
+	return handleRequest(client, urlTarget)
 }
 
-func handleRequest(conn *tls.Conn, url *url.URL) error {
+func handleRequest(client *communication.Client, url *url.URL) error {
 	httpClient := &http.Client{}
 
 	for {
 		msgBytes := make([]byte, 1024)
-		_, err := conn.Read(msgBytes)
+		_, err := client.Connection.Read(msgBytes)
 		if err != nil {
 			return err
 		}
+		packetRequest, err := communication.PacketFromBytes(msgBytes)
+		if err != nil {
+			return err
+		}
+		if packetRequest.Type != communication.HttpRequest {
+			// skip this packet if it isn't a request
+			continue
+		}
 
-		reader := bytes.NewReader(msgBytes)
+		reader := bytes.NewReader(packetRequest.Data)
 		msgBufio := bufio.NewReader(reader)
 		req, err := http.ReadRequest(msgBufio)
 		if err != nil {
@@ -74,7 +82,7 @@ func handleRequest(conn *tls.Conn, url *url.URL) error {
 			return err
 		}
 
-		_, err = conn.Write(buf.Bytes())
+		err = client.SendHttpResponse(buf.Bytes())
 		if err != nil {
 			return err
 		}
@@ -123,7 +131,6 @@ func interceptSignal(client *communication.Client) {
 		<-c
 
 		client.SendConnectionClose()
-		client.Connection.Close()
 		os.Exit(1)
 	}()
 }
