@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"log"
@@ -18,7 +15,6 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/communication"
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -59,14 +55,15 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 }
 
 func handleClient(client *communication.Client, channelsDomains *ChannelsDomains, db *gorm.DB) {
-	// defer aren't working, search why
 	defer client.Connection.Close()
 	defer log.Printf("Connection closed with %v", client.Connection.RemoteAddr())
+
 	// create random domain name
 	channelsName, err := createOrSelectChannelForUser(client, channelsDomains, db)
 	if err != nil {
 		// maybe shouldn't crash but skip this connection ?
-		log.Fatalf("Error while creating channels : %v", err)
+		log.Printf("Error while creating channels : %v", err)
+		return
 	}
 
 	channels := channelsDomains.Get(channelsName)
@@ -93,6 +90,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			readChan <- responsePacket
 		}
 	}()
+
 	for {
 		select {
 		case reply = <-channels.RequestChannel:
@@ -111,11 +109,8 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 				return
 			}
 		case response := <-readChan:
-			// move in a function
 			switch response.Header.Type {
 			case communication.ConnectionClose:
-				fmt.Println("closing conn")
-				// it will automically conn.close
 				return
 			case communication.HttpResponse:
 				reader := bytes.NewReader(response.Payload.Data)
@@ -145,7 +140,7 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 		return "", fmt.Errorf("Can't start a connection")
 	}
 
-	accessToken, err := verifyJwt(packet.Payload.Token)
+	accessToken, err := authent.VerifyJwt(packet.Payload.Token)
 	if err != nil {
 		// TODO: currently segfault bc connection is close
 		err = client.SendInvalidToken()
@@ -187,32 +182,4 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 	channels.Add(dnsRecord)
 
 	return dnsRecord, nil
-}
-
-func verifyJwt(tokenStr string) (*jwt.Token, error) {
-	// local cert for testing purpose
-	spkiPem := `
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0GGJjxtCXGQgKxwcFZwd2AkNdaPSMN76A5bJyk6Dve8gMi8sbypzKngzhkziqofVe9g5H9kWRyZNIVzKiK4OnFhTRvRtAXoeWj98EINRMmvmWGv5BKwGmfr7g/mVvr+viyROUrrPUWx6TslyVD7VxLFrSchLiAdV6pZdMrKD1tlSXNQ78N3Q2Nw/SmuYd07wBIbtDCTwG9XaCJFaw0jgbKs6wdpTSqkfTNnYE2ekOlI8nAtTwAthjJeIfuPuScG4wVvbTTMx+Hd3z4kU2ripynSOVOWioyWUw6uerJqt1sgclNdQkFwdXgCzcOmJYIt8cOvCm8jEkNPmL3jJMN/eVQIDAQAB
------END PUBLIC KEY-----
-	`
-
-	spkiBlock, _ := pem.Decode([]byte(spkiPem))
-	var spkiKey *rsa.PublicKey
-	pubInterface, _ := x509.ParsePKIXPublicKey(spkiBlock.Bytes)
-	spkiKey = pubInterface.(*rsa.PublicKey)
-
-	token, err := jwt.Parse(tokenStr, func(tok *jwt.Token) (interface{}, error) {
-		if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", tok.Header["alg"])
-		}
-
-		return spkiKey, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
 }

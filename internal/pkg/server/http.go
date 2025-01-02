@@ -44,16 +44,8 @@ func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain 
 		return
 	}
 
-	// out and in channel should be in dictionary
-	// fqdn represent the id while the value will be channel
-	// this dictionary has to be global
-
-	// it's working - just not now
-
 	channel.RequestChannel <- r
 	response := <-channel.ResponseChannel
-	//w.Header().Set("Content-Type", response.Header.Get("Content-Type"))
-	//w.Header().Set("Content-Length", response.Header.Get("Content-Length"))
 	io.Copy(w, response.Body)
 	response.Body.Close()
 }
