@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,11 +14,14 @@ import (
 	"time"
 
 	"github.com/bmehdi777/moon/internal/pkg/communication"
+	"github.com/bmehdi777/moon/internal/pkg/server/authent"
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+var ErrInvalidToken = fmt.Errorf("Token is not valid.")
 
 func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 	cert, err := tls.LoadX509KeyPair(config.GlobalConfig.App.CertPemPath, config.GlobalConfig.App.CertKeyPath)
@@ -61,7 +65,11 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 	// create random domain name
 	channelsName, err := createOrSelectChannelForUser(client, channelsDomains, db)
 	if err != nil {
-		// maybe shouldn't crash but skip this connection ?
+		if errors.Is(err, ErrInvalidToken) {
+			// drop connection
+			log.Printf("Invalid token from %v", client.Connection.RemoteAddr())
+			return
+		}
 		log.Printf("Error while creating channels : %v", err)
 		return
 	}
@@ -147,6 +155,7 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 		if err != nil {
 			return "", err
 		}
+		return "", ErrInvalidToken
 	}
 	sub, err := accessToken.Claims.GetSubject()
 	if err != nil {

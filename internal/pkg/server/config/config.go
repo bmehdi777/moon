@@ -3,10 +3,13 @@ package config
 /*
 *  This file has been place in its own package rather in the server package
 *  to avoid circular import.
-*/
+ */
 
 import (
+	"encoding/json"
+	"io"
 	"log"
+	"net/http"
 
 	"github.com/spf13/viper"
 )
@@ -34,11 +37,20 @@ type AuthConfig struct {
 	Algorithm string `mapstructure:"algorithm"`
 	Audience string `mapstructure:"audience"`
 }
+type RealmConfig struct {
+	Realm string `json:"realm"`
+	PublicKey string `json:"public_key"`
+	TokenService string `json:"token-service"`
+	AccountService string `json:"account-service"`
+	TokenNotBefore int `json:"tokens-not-before"`
+}
 
 type Config struct {
 	App      AppConfig `mapstructure:"app"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Auth     AuthConfig `mapstructure:"auth"`
+
+	RealmConfig RealmConfig
 }
 
 var GlobalConfig Config
@@ -71,6 +83,8 @@ func InitConfig() {
 
 	verifyApp()
 	verifyAuth()
+
+	GlobalConfig.RealmConfig = getPublicKey()
 }
 
 
@@ -93,4 +107,28 @@ func verifyAuth() {
 	if GlobalConfig.Auth.Audience == "" {
 		log.Fatalf("'auth.audience' can't be empty.")
 	}
+}
+
+func getPublicKey() RealmConfig {
+	response, err := http.Get(GlobalConfig.Auth.BaseURL + "/realms/" + GlobalConfig.Auth.Realm)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	if response.StatusCode != 200 {
+		log.Fatalf("Error : Keycloak %v", response.Status)
+	}
+	defer response.Body.Close()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	var realmConfig RealmConfig
+	err = json.Unmarshal(body, &realmConfig)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	return realmConfig
 }

@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -48,6 +49,15 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 
 	for {
 		packetRequest, err := client.Read()
+		if err != nil {
+			return fmt.Errorf("Error while parsing packet : %v", err)
+		}
+
+		if packetRequest.Header.Type == communication.InvalidToken {
+			fmt.Println("Token has expired. Please use `moon login`.")
+			os.Exit(1)
+		}
+
 		if packetRequest.Header.Type != communication.HttpRequest {
 			// skip this packet if it isn't a request
 			continue
