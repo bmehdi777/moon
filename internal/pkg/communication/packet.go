@@ -6,14 +6,9 @@ import (
 	"log"
 )
 
-/*
-* We currently have a problem with big packet :
-* We have a lenData higher than uint64 ...
-* Should we do multi part package ?
-*/
-
 const VERSION uint8 = 1
 const HEADER_SIZE uint32 = 14
+const READ_BUFFER_SIZE int = 1024
 
 var PacketVersionIncompatible = fmt.Errorf("Packet version are incompatible - current version : %d", VERSION)
 
@@ -118,8 +113,6 @@ func HeaderFromBytes(data []byte) (Header, error) {
 	msgType := MessageType(data[1])
 	lenToken := binary.BigEndian.Uint32(data[2:6])
 	lenData := binary.BigEndian.Uint64(data[6:HEADER_SIZE])
-
-	fmt.Println("lenData : ", lenData)
 
 	return Header{
 		Version:  version,

@@ -2,8 +2,8 @@ package communication
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/tls"
-	"fmt"
 )
 
 type Client struct {
@@ -23,27 +23,35 @@ func (c *Client) Read() (*Packet, error) {
 		return nil, err
 	}
 
-	fmt.Println("header bytes : ", headerBytes)
 	header, err := HeaderFromBytes(headerBytes)
 	if err != nil {
 		return nil, err
 	}
 
+	var bytesReceived int
 	length := uint64(HEADER_SIZE) + uint64(header.LenToken) + header.LenData
-	fmt.Println("length : ", length)
-	fmt.Println("lengthData2 : ", header.LenData)
-	buffer := make([]byte, length)
-	_, err = reader.Read(buffer)
+	buffer := bytes.NewBuffer(nil)
+
+	for {
+		chunk := make([]byte, READ_BUFFER_SIZE)
+		read, err := reader.Read(chunk)
+		if err != nil {
+			return nil, err
+		}
+
+		bytesReceived += read
+		buffer.Write(chunk[:read])
+
+		if buffer.Len() == int(length) {
+			break
+		}
+	}
+
+	packet, err := PacketFromBytes(buffer.Bytes())
 	if err != nil {
 		return nil, err
 	}
 
-	packet, err := PacketFromBytes(buffer)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("Packet : %v", packet)
 	return packet, nil
 }
 

@@ -83,20 +83,17 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 
 	go func() {
 		for {
-			fmt.Println("called here twice ?")
 			responsePacket, err := client.Read()
 			if err != nil {
 				if err != io.EOF {
 					log.Fatalf("Error while reading response from %v : %v", client.Connection.RemoteAddr(), err)
 				}
-				return
+				continue
 			}
-			fmt.Println("responsePacket ", responsePacket)
 			readChan <- responsePacket
 		}
 	}()
 	for {
-
 		select {
 		case reply = <-channels.RequestChannel:
 			var buf bytes.Buffer
@@ -114,7 +111,6 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 				return
 			}
 		case response := <-readChan:
-
 			// move in a function
 			switch response.Header.Type {
 			case communication.ConnectionClose:
@@ -129,6 +125,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 					log.Fatalf("Error while converting bytes to HTTP response %v", err)
 					return
 				}
+				reply = nil
 				channels.ResponseChannel <- resp
 			default:
 				log.Fatalf("Weird packet received. Skipping it.")
@@ -147,8 +144,6 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 	if packet.Header.Type != communication.ConnectionStart {
 		return "", fmt.Errorf("Can't start a connection")
 	}
-
-	log.Printf("Packet received : %#v", packet)
 
 	accessToken, err := verifyJwt(packet.Payload.Token)
 	if err != nil {
