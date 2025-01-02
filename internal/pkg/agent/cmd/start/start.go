@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
 )
 
 func NewCmdStart() *cobra.Command {
@@ -39,7 +38,11 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		port = "4040"
 	}
 
-	err = connectToServer(addr+":"+port, urlTarget)
+	stats := make(Statistics)
+
+	go httpServe(&stats)
+
+	err = connectToServer(addr+":"+port, urlTarget, &stats)
 	if err != nil {
 		fmt.Println("ERROR : ", err)
 	}
