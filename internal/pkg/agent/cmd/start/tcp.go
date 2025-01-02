@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -72,6 +73,9 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("response : ", string(buf.Bytes()))
+		fmt.Println("Buffer size : ", len(buf.Bytes()))
 
 		err = client.SendHttpResponse(buf.Bytes())
 		if err != nil {

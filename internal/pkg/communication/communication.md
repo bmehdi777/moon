@@ -5,7 +5,7 @@ Packet will be organized like so :
 ┌─────────┬────────┬─────────┬─────────┬─────────┐
 │ Version │  Type  │ LenAuth │ LenData │  Auth   │
 │         │        │   (n)   │   (N)   │         │
-│ 1 byte  │ 1 byte │ 4 bytes │ 4 bytes │ n bytes │
+│ 1 byte  │ 1 byte │ 4 bytes │ 8 bytes │ n bytes │
 ├─────────┴────────┴─────────┴─────────┴─────────┤
 │                                                │
 │                                                │

@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -79,15 +80,22 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 	log.Printf("Connection started with %v", client.Connection.RemoteAddr())
 	var reply *http.Request
 	readChan := make(chan *communication.Packet)
-	for {
-		go func() {
+
+	go func() {
+		for {
+			fmt.Println("called here twice ?")
 			responsePacket, err := client.Read()
 			if err != nil {
-				log.Fatalf("Error while reading response from %v : %v", client.Connection.RemoteAddr(), err)
+				if err != io.EOF {
+					log.Fatalf("Error while reading response from %v : %v", client.Connection.RemoteAddr(), err)
+				}
 				return
 			}
+			fmt.Println("responsePacket ", responsePacket)
 			readChan <- responsePacket
-		}()
+		}
+	}()
+	for {
 
 		select {
 		case reply = <-channels.RequestChannel:
@@ -144,7 +152,11 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 
 	accessToken, err := verifyJwt(packet.Payload.Token)
 	if err != nil {
-		return "", err
+		// TODO: currently segfault bc connection is close
+		err = client.SendInvalidToken()
+		if err != nil {
+			return "", err
+		}
 	}
 	sub, err := accessToken.Claims.GetSubject()
 	if err != nil {

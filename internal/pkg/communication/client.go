@@ -23,12 +23,15 @@ func (c *Client) Read() (*Packet, error) {
 		return nil, err
 	}
 
+	fmt.Println("header bytes : ", headerBytes)
 	header, err := HeaderFromBytes(headerBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	length := HEADER_SIZE + header.LenToken + header.LenData
+	length := uint64(HEADER_SIZE) + uint64(header.LenToken) + header.LenData
+	fmt.Println("length : ", length)
+	fmt.Println("lengthData2 : ", header.LenData)
 	buffer := make([]byte, length)
 	_, err = reader.Read(buffer)
 	if err != nil {
@@ -40,6 +43,7 @@ func (c *Client) Read() (*Packet, error) {
 		return nil, err
 	}
 
+	fmt.Printf("Packet : %v", packet)
 	return packet, nil
 }
 
@@ -61,7 +65,6 @@ func (c *Client) SendConnectionStart() error {
 }
 
 func (c *Client) SendConnectionClose() error {
-	fmt.Println("Closing connection")
 	packet := NewPacket(ConnectionClose, c.AccessToken, nil)
 	err := c.Write(packet)
 	if err != nil {
@@ -81,7 +84,15 @@ func (c *Client) SendHttpRequest(data []byte) error {
 
 func (c *Client) SendHttpResponse(data []byte) error {
 	packet := NewPacket(HttpResponse, c.AccessToken, data)
-	fmt.Printf("packet : %#v", packet)
+	err := c.Write(packet)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) SendInvalidToken() error {
+	packet := NewPacket(InvalidToken, c.AccessToken, nil)
 	err := c.Write(packet)
 	if err != nil {
 		return err

@@ -6,8 +6,14 @@ import (
 	"log"
 )
 
+/*
+* We currently have a problem with big packet :
+* We have a lenData higher than uint64 ...
+* Should we do multi part package ?
+*/
+
 const VERSION uint8 = 1
-const HEADER_SIZE uint32 = 10
+const HEADER_SIZE uint32 = 14
 
 var PacketVersionIncompatible = fmt.Errorf("Packet version are incompatible - current version : %d", VERSION)
 
@@ -18,13 +24,14 @@ const (
 	ConnectionClose
 	HttpRequest
 	HttpResponse
+	InvalidToken
 )
 
 type Header struct {
 	Version  uint8
 	Type     MessageType
 	LenToken uint32
-	LenData  uint32
+	LenData  uint64
 }
 type Payload struct {
 	Token string
@@ -46,7 +53,7 @@ func NewPacket(msgType MessageType, token *string, data []byte) *Packet {
 			Version:  VERSION,
 			Type:     msgType,
 			LenToken: uint32(len(tok)),
-			LenData:  uint32(len(data)),
+			LenData:  uint64(len(data)),
 		},
 		Payload: Payload{
 			Token: tok,
@@ -64,7 +71,7 @@ func (p *Packet) Bytes() []byte {
 	}
 
 	buffer = binary.BigEndian.AppendUint32(buffer, p.Header.LenToken)
-	buffer = binary.BigEndian.AppendUint32(buffer, p.Header.LenData)
+	buffer = binary.BigEndian.AppendUint64(buffer, p.Header.LenData)
 
 	buffer = append(buffer, []byte(p.Payload.Token)...)
 	buffer = append(buffer, p.Payload.Data...)
@@ -73,8 +80,7 @@ func (p *Packet) Bytes() []byte {
 }
 
 func PacketFromBytes(data []byte) (*Packet, error) {
-
-	header, err := HeaderFromBytes(data[0:10])
+	header, err := HeaderFromBytes(data[0:HEADER_SIZE])
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +89,7 @@ func PacketFromBytes(data []byte) (*Packet, error) {
 	var token string
 	if header.LenToken != 0 {
 		tokenOffset += header.LenToken
-		token = string(data[10:tokenOffset])
+		token = string(data[HEADER_SIZE:tokenOffset])
 	}
 
 	var payload []byte
@@ -111,7 +117,9 @@ func HeaderFromBytes(data []byte) (Header, error) {
 
 	msgType := MessageType(data[1])
 	lenToken := binary.BigEndian.Uint32(data[2:6])
-	lenData := binary.BigEndian.Uint32(data[6:10])
+	lenData := binary.BigEndian.Uint64(data[6:HEADER_SIZE])
+
+	fmt.Println("lenData : ", lenData)
 
 	return Header{
 		Version:  version,
