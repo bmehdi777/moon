@@ -4,10 +4,13 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func InitializeDBConn() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open(config.GlobalConfig.Database.Path), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(config.GlobalConfig.Database.Path), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return nil, err
 	}
