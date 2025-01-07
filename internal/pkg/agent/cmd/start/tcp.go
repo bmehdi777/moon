@@ -87,6 +87,7 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 				return err
 			}
 			break
+
 		default:
 			// skip this packet
 			continue
@@ -139,3 +140,6 @@ func interceptSignal(client *communication.Client) {
 		os.Exit(1)
 	}()
 }
+
+// Heartbeat to detect lost connection
+func heartbeat() {}

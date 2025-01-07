@@ -120,6 +120,12 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			switch response.Header.Type {
 			case communication.ConnectionClose:
 				return
+			case communication.Ping:
+				err = client.SendPong()
+				if err != nil {
+					log.Fatalf("Error while responding to ping %v", err)
+					return
+				}
 			case communication.HttpResponse:
 				reader := bytes.NewReader(response.Payload.Data)
 				respBufio := bufio.NewReader(reader)

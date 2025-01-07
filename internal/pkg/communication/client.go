@@ -81,6 +81,24 @@ func (c *Client) SendConnectionClose() error {
 	return nil
 }
 
+func (c *Client) SendPing() error {
+	packet := NewPacket(Ping, nil)
+	err := c.Write(packet)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) SendPong() error {
+	packet := NewPacket(Ping, nil)
+	err := c.Write(packet)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Client) SendHttpRequest(data []byte) error {
 	packet := NewPacket(HttpRequest, data)
 	err := c.Write(packet)
