@@ -7,12 +7,11 @@ import (
 )
 
 type Client struct {
-	Connection  *tls.Conn
-	AccessToken *string
+	Connection *tls.Conn
 }
 
-func NewClient(conn *tls.Conn, token *string) *Client {
-	return &Client{Connection: conn, AccessToken: token}
+func NewClient(conn *tls.Conn) *Client {
+	return &Client{Connection: conn}
 }
 
 func (c *Client) Read() (*Packet, error) {
@@ -63,8 +62,9 @@ func (c *Client) Write(packet *Packet) error {
 	return nil
 }
 
-func (c *Client) SendConnectionStart() error {
-	packet := NewPacket(ConnectionStart, c.AccessToken, nil)
+func (c *Client) SendConnectionStart(token string) error {
+	authMsg := NewAuthMessage(token)
+	packet := NewPacket(ConnectionStart, authMsg.Bytes())
 	err := c.Write(packet)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (c *Client) SendConnectionStart() error {
 }
 
 func (c *Client) SendConnectionClose() error {
-	packet := NewPacket(ConnectionClose, c.AccessToken, nil)
+	packet := NewPacket(ConnectionClose, nil)
 	err := c.Write(packet)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (c *Client) SendConnectionClose() error {
 }
 
 func (c *Client) SendHttpRequest(data []byte) error {
-	packet := NewPacket(HttpRequest, c.AccessToken, data)
+	packet := NewPacket(HttpRequest, data)
 	err := c.Write(packet)
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (c *Client) SendHttpRequest(data []byte) error {
 }
 
 func (c *Client) SendHttpResponse(data []byte) error {
-	packet := NewPacket(HttpResponse, c.AccessToken, data)
+	packet := NewPacket(HttpResponse, data)
 	err := c.Write(packet)
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (c *Client) SendHttpResponse(data []byte) error {
 }
 
 func (c *Client) SendInvalidToken() error {
-	packet := NewPacket(InvalidToken, c.AccessToken, nil)
+	packet := NewPacket(InvalidToken, nil)
 	err := c.Write(packet)
 	if err != nil {
 		return err

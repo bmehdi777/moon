@@ -12,20 +12,6 @@ const READ_BUFFER_SIZE int = 1024
 
 var PacketVersionIncompatible = fmt.Errorf("Packet version are incompatible - current version : %d", VERSION)
 
-type MessageType uint8
-
-const (
-	ConnectionStart MessageType = iota
-	ConnectionClose
-	// Heartbeat
-	Ping
-	Pong
-
-	HttpRequest
-	HttpResponse
-
-	InvalidToken
-)
 
 type Header struct {
 	Version uint8       // 1
@@ -41,7 +27,7 @@ type Packet struct {
 	Payload Payload
 }
 
-func NewPacket(msgType MessageType, token *string, data []byte) *Packet {
+func NewPacket(msgType MessageType, data []byte) *Packet {
 	packet := Packet{
 		Header: Header{
 			Version: VERSION,
@@ -105,4 +91,18 @@ func HeaderFromBytes(data []byte) (Header, error) {
 		Type:    msgType,
 		LenData: lenData,
 	}, nil
+}
+
+func (p *Packet) Message() (Message, error) {
+	var msg Message
+
+	switch p.Header.Type {
+	case ConnectionStart:
+		msg = bytesToAuthMessage(p.Payload.Data)
+		break
+	default:
+		return nil, fmt.Errorf("Trying to convert a raw payload to an undefined message : %v.", p.Header.Type.String())
+	}
+
+	return msg, nil
 }

@@ -53,7 +53,7 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 			tcpConn.SetKeepAlivePeriod(1 * time.Hour)
 		}
 
-		client := communication.NewClient(conn.(*tls.Conn), nil)
+		client := communication.NewClient(conn.(*tls.Conn))
 		go handleClient(client, channelsDomains, db)
 	}
 }
@@ -144,19 +144,26 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 		return "", err
 	}
 
+	// Ensure we have a auth message
 	if packet.Header.Type != communication.ConnectionStart {
 		return "", fmt.Errorf("Can't start a connection")
 	}
 
-	accessToken, err := authent.VerifyJwt(packet.Payload.Token)
+	msg, err := packet.Message()
 	if err != nil {
-		// TODO: currently segfault bc connection is close
+		return "", err
+	}
+
+	authMsg := msg.(*communication.AuthMessage)
+	accessToken, err := authent.VerifyJwt(authMsg.Token)
+	if err != nil {
 		err = client.SendInvalidToken()
 		if err != nil {
 			return "", err
 		}
 		return "", ErrInvalidToken
 	}
+
 	sub, err := accessToken.Claims.GetSubject()
 	if err != nil {
 		return "", err

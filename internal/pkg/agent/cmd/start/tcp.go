@@ -30,11 +30,11 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 		return errors.New("Can't connect to the server : " + err.Error())
 	}
 	defer conn.Close()
-	client := communication.NewClient(conn, &tokensCached.AccessToken)
+	client := communication.NewClient(conn)
 
 	interceptSignal(client)
 
-	err = client.SendConnectionStart()
+	err = client.SendConnectionStart(tokensCached.AccessToken)
 	if err != nil {
 		return err
 	}
@@ -53,42 +53,43 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 			return fmt.Errorf("Error while parsing packet : %v", err)
 		}
 
-		if packetRequest.Header.Type == communication.InvalidToken {
+		switch packetRequest.Header.Type {
+		case communication.InvalidToken:
 			fmt.Println("Token has expired. Please use `moon login`.")
 			os.Exit(1)
-		}
+			break
+		case communication.HttpRequest:
+			reader := bytes.NewReader(packetRequest.Payload.Data)
+			msgBufio := bufio.NewReader(reader)
+			req, err := http.ReadRequest(msgBufio)
+			if err != nil {
+				return err
+			}
 
-		if packetRequest.Header.Type != communication.HttpRequest {
-			// skip this packet if it isn't a request
+			req.URL.Host = url.Host
+			req.URL.Scheme = url.Scheme
+			req.RequestURI = ""
+
+			// send to urlTarget
+			resp, err := httpClient.Do(req)
+			if err != nil {
+				return err
+			}
+
+			var buf bytes.Buffer
+			err = resp.Write(&buf)
+			if err != nil {
+				return err
+			}
+
+			err = client.SendHttpResponse(buf.Bytes())
+			if err != nil {
+				return err
+			}
+			break
+		default:
+			// skip this packet
 			continue
-		}
-
-		reader := bytes.NewReader(packetRequest.Payload.Data)
-		msgBufio := bufio.NewReader(reader)
-		req, err := http.ReadRequest(msgBufio)
-		if err != nil {
-			return err
-		}
-
-		req.URL.Host = url.Host
-		req.URL.Scheme = url.Scheme
-		req.RequestURI = ""
-
-		// send to urlTarget
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			return err
-		}
-
-		var buf bytes.Buffer
-		err = resp.Write(&buf)
-		if err != nil {
-			return err
-		}
-
-		err = client.SendHttpResponse(buf.Bytes())
-		if err != nil {
-			return err
 		}
 	}
 }
