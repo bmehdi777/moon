@@ -7,7 +7,7 @@ import (
 )
 
 const VERSION uint8 = 1
-const HEADER_SIZE uint32 = 14
+const HEADER_SIZE int = 10
 const READ_BUFFER_SIZE int = 1024
 
 var PacketVersionIncompatible = fmt.Errorf("Packet version are incompatible - current version : %d", VERSION)
@@ -17,20 +17,23 @@ type MessageType uint8
 const (
 	ConnectionStart MessageType = iota
 	ConnectionClose
+	// Heartbeat
+	Ping
+	Pong
+
 	HttpRequest
 	HttpResponse
+
 	InvalidToken
 )
 
 type Header struct {
-	Version  uint8
-	Type     MessageType
-	LenToken uint32
-	LenData  uint64
+	Version uint8       // 1
+	Type    MessageType // 1
+	LenData uint64      // 8
 }
 type Payload struct {
-	Token string
-	Data  []byte
+	Data []byte
 }
 
 type Packet struct {
@@ -39,20 +42,14 @@ type Packet struct {
 }
 
 func NewPacket(msgType MessageType, token *string, data []byte) *Packet {
-	var tok string = ""
-	if token != nil {
-		tok = *token
-	}
 	packet := Packet{
 		Header: Header{
-			Version:  VERSION,
-			Type:     msgType,
-			LenToken: uint32(len(tok)),
-			LenData:  uint64(len(data)),
+			Version: VERSION,
+			Type:    msgType,
+			LenData: uint64(len(data)),
 		},
 		Payload: Payload{
-			Token: tok,
-			Data:  data,
+			Data: data,
 		},
 	}
 
@@ -65,10 +62,8 @@ func (p *Packet) Bytes() []byte {
 		byte(p.Header.Type),
 	}
 
-	buffer = binary.BigEndian.AppendUint32(buffer, p.Header.LenToken)
 	buffer = binary.BigEndian.AppendUint64(buffer, p.Header.LenData)
 
-	buffer = append(buffer, []byte(p.Payload.Token)...)
 	buffer = append(buffer, p.Payload.Data...)
 
 	return buffer
@@ -80,22 +75,14 @@ func PacketFromBytes(data []byte) (*Packet, error) {
 		return nil, err
 	}
 
-	var tokenOffset uint32 = HEADER_SIZE
-	var token string
-	if header.LenToken != 0 {
-		tokenOffset += header.LenToken
-		token = string(data[HEADER_SIZE:tokenOffset])
-	}
-
 	var payload []byte
 	if header.LenData != 0 {
-		payload = data[tokenOffset:]
+		payload = data[HEADER_SIZE:]
 	}
 
 	packet := Packet{
 		Header: header,
 		Payload: Payload{
-			token,
 			payload,
 		},
 	}
@@ -111,13 +98,11 @@ func HeaderFromBytes(data []byte) (Header, error) {
 	}
 
 	msgType := MessageType(data[1])
-	lenToken := binary.BigEndian.Uint32(data[2:6])
-	lenData := binary.BigEndian.Uint64(data[6:HEADER_SIZE])
+	lenData := binary.BigEndian.Uint64(data[2:HEADER_SIZE])
 
 	return Header{
-		Version:  version,
-		Type:     msgType,
-		LenToken: lenToken,
-		LenData:  lenData,
+		Version: version,
+		Type:    msgType,
+		LenData: lenData,
 	}, nil
 }

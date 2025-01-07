@@ -29,7 +29,7 @@ func (c *Client) Read() (*Packet, error) {
 	}
 
 	var bytesReceived int
-	length := uint64(HEADER_SIZE) + uint64(header.LenToken) + header.LenData
+	length := uint64(HEADER_SIZE) + header.LenData
 	buffer := bytes.NewBuffer(nil)
 
 	for {

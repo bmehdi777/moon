@@ -44,6 +44,8 @@ func handleAllRequest(w http.ResponseWriter, r *http.Request, channelsPerDomain 
 		return
 	}
 
+	//r.URL.Host = 
+
 	channel.RequestChannel <- r
 	response := <-channel.ResponseChannel
 	io.Copy(w, response.Body)

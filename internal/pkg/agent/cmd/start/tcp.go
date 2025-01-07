@@ -18,7 +18,7 @@ import (
 	"github.com/bmehdi777/moon/internal/pkg/communication"
 )
 
-func connectToServer(serverAddrPort string, urlTarget *url.URL, stats *Statistics) error {
+func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 	tokensCached, err := getReadyForAuth()
 	if err != nil {
 		return err
@@ -39,10 +39,10 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL, stats *Statistic
 		return err
 	}
 
-	return handleRequest(client, urlTarget, stats)
+	return handleRequest(client, urlTarget)
 }
 
-func handleRequest(client *communication.Client, url *url.URL, stats *Statistics) error {
+func handleRequest(client *communication.Client, url *url.URL) error {
 	httpClient := &http.Client{
 		Timeout: time.Minute * 5, // same as google chrome
 	}
@@ -73,13 +73,6 @@ func handleRequest(client *communication.Client, url *url.URL, stats *Statistics
 		req.URL.Host = url.Host
 		req.URL.Scheme = url.Scheme
 		req.RequestURI = ""
-
-		statsKey := req.Method + " " + req.URL.Path
-		if stats.Get(statsKey) == -1 {
-			stats.Set(statsKey, 1)
-		} else {
-			stats.Increment(statsKey)
-		}
 
 		// send to urlTarget
 		resp, err := httpClient.Do(req)

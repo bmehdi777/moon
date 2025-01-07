@@ -38,11 +38,7 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		port = "4040"
 	}
 
-	stats := make(Statistics)
-
-	go httpServe(&stats)
-
-	err = connectToServer(addr+":"+port, urlTarget, &stats)
+	err = connectToServer(addr+":"+port, urlTarget)
 	if err != nil {
 		fmt.Println("ERROR : ", err)
 	}

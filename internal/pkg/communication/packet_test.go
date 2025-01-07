@@ -11,9 +11,7 @@ import (
 
 func TestPacketToByte(t *testing.T) {
 	var version uint8 = 1
-	var token string = "Token example"
 	var data []byte = []byte("GET /")
-	var lenToken uint32 = uint32(len(token))
 	var lenData uint64 = uint64(len(data))
 
 	expected := []byte{
@@ -21,22 +19,18 @@ func TestPacketToByte(t *testing.T) {
 		byte(communication.ConnectionStart),
 	}
 
-	expected = binary.BigEndian.AppendUint32(expected, lenToken)
 	expected = binary.BigEndian.AppendUint64(expected, lenData)
 
-	expected = append(expected, []byte(token)...)
 	expected = append(expected, data...)
 
 	p := communication.Packet{
 		Header: communication.Header{
-			Version:  1,
-			Type:     communication.ConnectionStart,
-			LenToken: lenToken,
-			LenData:  lenData,
+			Version: 1,
+			Type:    communication.ConnectionStart,
+			LenData: lenData,
 		},
 		Payload: communication.Payload{
-			Token: token,
-			Data:  data,
+			Data: data,
 		},
 	}
 
@@ -50,14 +44,13 @@ func TestPacketToByte(t *testing.T) {
 func TestByteToPacket(t *testing.T) {
 	expected := communication.Packet{
 		Header: communication.Header{
-			Version:  1,
-			Type:     communication.ConnectionStart,
-			LenToken: 0,
-			LenData:  0,
+			Version: 1,
+			Type:    communication.ConnectionStart,
+			LenData: 0,
 		},
 	}
 
-	rawPacket := []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	rawPacket := []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	p, err := communication.PacketFromBytes(rawPacket)
 	if err != nil {
@@ -70,7 +63,7 @@ func TestByteToPacket(t *testing.T) {
 }
 
 func TestIncompatibleVersion(t *testing.T) {
-	rawPacket := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	rawPacket := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	_, err := communication.PacketFromBytes(rawPacket)
 	if err == nil {
