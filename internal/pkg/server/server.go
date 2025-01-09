@@ -4,6 +4,9 @@ import (
 	"log"
 	"os"
 
+	"context"
+	"fmt"
+
 	"github.com/bmehdi777/moon/internal/pkg/server/config"
 	"github.com/bmehdi777/moon/internal/pkg/server/database"
 )
@@ -20,10 +23,19 @@ func Run() {
 	channelPerDomain := make(ChannelsDomains)
 
 	// tcp connection between client and server
-	go tcpServe(&channelPerDomain, db)
+	//go tcpServe(&channelPerDomain, db)
 
 	// http connection between server and the world
 	if err := httpServe(&channelPerDomain, db); err != nil {
 		log.Fatalf("Error : %v ", err)
+	}
+
+	ctx := context.Background()
+	srv := TunnelServer{
+		ChannelsPerDomain: &channelPerDomain,
+	}
+	err = srv.Run(ctx)
+	if err != nil {
+		fmt.Println("Err : ", err)
 	}
 }

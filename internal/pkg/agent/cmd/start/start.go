@@ -1,6 +1,7 @@
 package start
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -38,9 +39,19 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		port = "4040"
 	}
 
-	err = connectToServer(addr+":"+port, urlTarget)
-	if err != nil {
-		fmt.Println("ERROR : ", err)
+	ctx := context.Background()
+	cli := Client{
+		ProxyUrl: urlTarget,
 	}
+	err = cli.Run(ctx)
+	if err != nil {
+		fmt.Println("Err : ", err)
+		return
+	}
+
+	//err = connectToServer(addr+":"+port, urlTarget)
+	//if err != nil {
+	//	fmt.Println("ERROR : ", err)
+	//}
 }
 

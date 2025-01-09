@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package tunnel;
+
+option go_package="github.com/bmehdi777/moon/protos";
+
+service Tunnel {
+	rpc Stream(stream StreamClient) returns (stream StreamServer) {}
+}
+
+message StreamClient {
+	oneof event {
+		Login credentials = 1;
+		Logout logout = 2;
+
+		bytes http_response = 3;
+
+		// Heartbeat
+		Ping ping = 4;
+	}
+
+	message Login {
+		string access_token = 1;
+	}
+
+	message Logout {}
+
+	message HttpOut {
+		bytes http_message = 1;
+	}
+
+	message Ping {}
+}
+
+message StreamServer {
+	oneof event {
+		bytes http_request = 1;
+
+		// Heartbeat
+		Pong pong = 2;
+	}
+
+	message Pong {}
+}

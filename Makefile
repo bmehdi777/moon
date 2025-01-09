@@ -1,4 +1,4 @@
-.PHONY: build clean
+.PHONY: build clean test gen-grpc
 
 build: build-agent build-server build-api-test certs
 
@@ -37,3 +37,7 @@ clean-rpi:
 
 test:
 	go test -v ./internal/pkg/communication
+
+
+gen-grpc:
+	protoc --go_opt=paths=source_relative --go_out="." --go-grpc_out=module=github.com/bmehdi777/moon/protos:protos protos/tunnel.proto
