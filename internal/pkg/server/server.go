@@ -22,6 +22,16 @@ func Run() {
 
 	channelPerDomain := make(ChannelsDomains)
 
+	go func() {
+		ctx := context.Background()
+		srv := TunnelServer{
+			ChannelsPerDomain: &channelPerDomain,
+		}
+		err = srv.Run(ctx)
+		if err != nil {
+			fmt.Println("Err : ", err)
+		}
+	}()
 	// tcp connection between client and server
 	//go tcpServe(&channelPerDomain, db)
 
@@ -30,12 +40,4 @@ func Run() {
 		log.Fatalf("Error : %v ", err)
 	}
 
-	ctx := context.Background()
-	srv := TunnelServer{
-		ChannelsPerDomain: &channelPerDomain,
-	}
-	err = srv.Run(ctx)
-	if err != nil {
-		fmt.Println("Err : ", err)
-	}
 }

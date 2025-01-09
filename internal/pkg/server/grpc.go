@@ -60,14 +60,17 @@ func (ts *TunnelServer) Stream(stream pb.Tunnel_StreamServer) error {
 	}
 
 	if _, ok := msg.Event.(*pb.StreamClient_Credentials); !ok {
+		fmt.Println("bad login")
 		// close
 		// send bad creds msg
 		return nil
 	}
 
-	channelsName, err := ts.login(msg.Event.(*pb.StreamClient_Credentials).Credentials)
+	creds := msg.Event.(*pb.StreamClient_Credentials).Credentials
+	fmt.Println("creds : ", creds.AccessToken)
+	channelsName, err := ts.login(creds.AccessToken)
 	if err != nil {
-		fmt.Println("Error : ", err)
+		fmt.Println("Error channels: ", err)
 		return err
 	}
 
@@ -136,9 +139,10 @@ func (ts *TunnelServer) Stream(stream pb.Tunnel_StreamServer) error {
 	}
 }
 
-func (ts *TunnelServer) login(creds *pb.StreamClient_Login) (string, error) {
-	accessToken, err := authent.VerifyJwt(creds.AccessToken)
+func (ts *TunnelServer) login(token string) (string, error) {
+	accessToken, err := authent.VerifyJwt(token)
 	if err != nil {
+		fmt.Println("Error token : ", err)
 		return "", err
 	}
 
@@ -150,6 +154,8 @@ func (ts *TunnelServer) login(creds *pb.StreamClient_Login) (string, error) {
 	// create domain record in db
 	var user database.User
 	ts.Database.First(&user, "kc_user_id = ?", sub)
+
+	fmt.Println("test")
 
 	// no domain record registered
 	var dnsRecord string

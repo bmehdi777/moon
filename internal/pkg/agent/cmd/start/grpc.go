@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	pb "github.com/bmehdi777/moon/protos"
@@ -34,10 +35,31 @@ func (c *Client) Run(ctx context.Context) error {
 		return nil
 	}
 
+	tokensCached, err := getReadyForAuth()
+	if err != nil {
+		return err
+	}
+	fmt.Println("token : ", tokensCached.AccessToken)
+
+	err = client.Send(&pb.StreamClient{
+		Event: &pb.StreamClient_Credentials{
+			Credentials: &pb.StreamClient_Login{
+				AccessToken: tokensCached.AccessToken,
+			},
+		},
+	})
+	if err != nil {
+		fmt.Println("Error login", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("login")
+
 	// heartbeat
 	ticker := time.NewTicker(5 * time.Second)
 	go func() {
 		for {
+			fmt.Println("tick")
 			select {
 			case <-ticker.C:
 				err := client.Send(&pb.StreamClient{
