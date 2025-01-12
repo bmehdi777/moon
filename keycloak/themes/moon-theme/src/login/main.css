@@ -1,0 +1,150 @@
+.kcLoginClass {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	background: #fff;
+	color: #1a1a1a;
+	min-height: 100vh;
+	display: flex;
+}
+.kcHeaderClass {
+	position: absolute;
+}
+
+
+.kcFormCardClass {
+	display: flex;
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem;
+	flex-direction: column;
+}
+
+.kcFormCardClass > #kc-content {
+	max-width: 400px;
+}
+
+.kcFormHeaderClass {
+	margin-bottom: 2rem;
+	text-align: center;
+}
+
+.kcFormGroupClass {
+	margin-bottom: 1.5rem;
+}
+
+.kcFormGroupClass label {
+	display: inline-block;
+	margin-bottom: 0.5rem;
+	color: #666;
+	font-weight: 500;
+}
+
+.kcFormGroupClass input[type="text"],
+.kcFormGroupClass input[type="password"] {
+	width: 100%;
+	padding: 0.75rem;
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 8px;
+	color: #1a1a1a;
+	font-size: 1rem;
+	transition: border-color 0.3s ease;
+}
+
+.kcFormGroupClass input:focus[type="text"],
+.kcFormGroupClass input:focus[type="password"] {
+	outline: none;
+	border-color: #1a1a1a;
+}
+
+
+
+.kcButtonClass {
+	width: 100%;
+	padding: 0.75rem;
+	border-radius: 8px;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	margin-bottom: 1rem;
+}
+
+.kcButtonPrimaryClass {
+	background: #1a1a1a;
+	color: #fff;
+	border: none;
+}
+
+.kcButtonPrimaryClass:hover {
+	transform: translateY(-2px);
+	background: #333;
+}
+
+.kcInputGroup {
+	position: relative;
+}
+.kcFormPasswordVisibilityButtonClass {
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	color: #666;
+	display: flex;
+	align-items: center;
+}
+
+.kcFormSettingClass {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+}
+
+.kcFormOptionsWrapperClass a {
+	color: #666;
+	text-decoration: none;
+}
+
+.kcFormOptionsWrapperClass a:hover {
+	color: #1a1a1a;
+}
+.kcSignUpClass {
+	text-align: center;
+}
+.kcSignUpClass #kc-info-wrapper {
+	background-color: #fff;
+}
+
+.kcInfoAreaWrapperClass span {
+	color: #666;
+}
+.kcInfoAreaWrapperClass span a, 
+.kcInfoAreaWrapperClass span a>span {
+	color: #1a1a1a;
+}
+.kcInfoAreaWrapperClass a:hover {
+	color: #1a1a1a;
+	text-decoration: underline;
+}
+
+.kcFormSocialAccountListClass li {
+	width: 100%;
+	padding: 0.75rem;
+	border-radius: 8px;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	margin-bottom: 1rem;
+
+	border: 1px solid #1a1a1a;
+}
+.kcFormSocialAccountListClass li a {
+	color: #1a1a1a;
+}
+.kcFormSocialAccountListClass li:hover {
+	transform: translateY(-2px);
+}
