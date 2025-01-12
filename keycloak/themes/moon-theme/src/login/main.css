@@ -176,3 +176,19 @@
 .kcFormSocialAccountListClass li:hover {
 	transform: translateY(-2px);
 }
+
+.kcAlertClass {
+	border: 1px solid rgba(0,0,0,0.1);
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.kcAlertClass.alert-error {
+	background-color: rgba(220, 53, 69, 0.05);
+	border: 1px solid rgba(220, 53, 69, 0.05);
+	color: #dc3545;
+}

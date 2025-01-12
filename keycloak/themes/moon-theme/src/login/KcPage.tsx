@@ -61,4 +61,8 @@ const classes = {
   kcInfoAreaWrapperClass: "",
   kcFormSocialAccountListClass: "",
   kcFormSocialAccountListButtonClass: "",
+
+	kcAlertClass: "",
+	kcFeedbackInfoIcon: "",
+	kcFeedbackErrorIcon: "",
 } satisfies { [key in ClassKey]?: string };
