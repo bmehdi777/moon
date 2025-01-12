@@ -58,8 +58,8 @@ var GlobalConfig Config
 func InitConfig() {
 	GlobalConfig = Config{
 		App: AppConfig{
-			CertKeyPath: "./certs/server.key",
-			CertPemPath: "./certs/server.pem",
+			CertKeyPath: "./assets/server/certs/server.key",
+			CertPemPath: "./assets/server/certs/server.pem",
 			HttpAddr:    "0.0.0.0",
 			HttpPort:    "8080",
 			TcpAddr:     "0.0.0.0",
