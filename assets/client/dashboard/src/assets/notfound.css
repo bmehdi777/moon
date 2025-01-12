@@ -1,0 +1,117 @@
+.error-container {
+	display: flex;
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem;
+}
+
+.error-content {
+	text-align: center;
+	max-width: 480px;
+}
+
+.error-code {
+	font-size: 8rem;
+	font-weight: 700;
+	line-height: 1;
+	margin-bottom: 1rem;
+	color: #1a1a1a;
+	letter-spacing: -4px;
+}
+
+.error-title {
+	font-size: 2rem;
+	margin-bottom: 1rem;
+	color: #1a1a1a;
+}
+
+.error-message {
+	font-size: 1.1rem;
+	color: #666;
+	margin-bottom: 2rem;
+	line-height: 1.5;
+}
+
+.moon-illustration {
+	width: 200px;
+	height: 200px;
+	margin: 0 auto 2rem;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+	position: relative;
+	box-shadow: inset -25px -25px 40px rgba(0, 0, 0, 0.1);
+	animation: floatAndRotate 6s ease-in-out infinite;
+}
+
+.crater {
+	position: absolute;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 50%;
+	transition: all 0.3s ease;
+
+}
+
+.crater-1 {
+	width: 40px;
+	height: 40px;
+	top: 30%;
+	left: 25%;
+	animation: glowCrater 4s ease-in-out infinite;
+
+}
+
+.crater-2 {
+	width: 30px;
+	height: 30px;
+	top: 50%;
+	right: 30%;
+	animation: glowCrater 4s ease-in-out infinite 1s;
+
+}
+
+.crater-3 {
+	width: 25px;
+	height: 25px;
+	bottom: 25%;
+	left: 40%;
+	animation: glowCrater 4s ease-in-out infinite 2s;
+
+}
+
+@media (max-width: 768px) {
+	.error-code {
+		font-size: 6rem;
+	}
+
+	.error-title {
+		font-size: 1.5rem;
+	}
+
+	.moon-illustration {
+		width: 150px;
+		height: 150px;
+	}
+}
+
+@keyframes floatAndRotate {
+	0% {
+		transform: translateY(0) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-20px) rotate(5deg);
+	}
+	100% {
+		transform: translateY(0) rotate(0deg);
+	}
+}
+
+@keyframes glowCrater {
+	0%, 100% {
+		background: rgba(0, 0, 0, 0.05);
+	}
+	50% {
+		background: rgba(0, 0, 0, 0.08);
+		transform: scale(1.05);
+	}
+}
