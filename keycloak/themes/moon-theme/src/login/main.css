@@ -8,14 +8,33 @@
 .kcHeaderClass {
 	position: absolute;
 }
-
+.kcHeaderWrapperClass span {
+	padding: 1rem;
+	font-size: 1.8rem;
+	font-weight: 600;
+	color: #1a1a1a;
+}
+.kcHeaderWrapperClass#kc-header-wrapper {
+	padding: 1rem;
+}
+.kcHeaderWrapperClass span::before {
+	content: '';
+	margin-right: 1rem;
+	vertical-align: -30%;
+	display: inline-block;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: #1a1a1a;
+	box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
 
 .kcFormCardClass {
 	display: flex;
 	flex: 1;
 	justify-content: center;
 	align-items: center;
-	padding: 2rem;
+	padding: 0 2rem;
 	flex-direction: column;
 }
 
@@ -129,6 +148,15 @@
 .kcInfoAreaWrapperClass a:hover {
 	color: #1a1a1a;
 	text-decoration: underline;
+}
+
+.kcFormSocialAccountListButtonClass:hover,
+.login-pf a:hover {
+	color: #1a1a1a;
+	text-decoration: none;
+}
+.kcFormSocialAccountNameClass:hover {
+	color: #1a1a1a;
 }
 
 .kcFormSocialAccountListClass li {
