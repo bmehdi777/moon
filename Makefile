@@ -1,4 +1,4 @@
-.PHONY: build clean
+.PHONY: build clean theme test build-kc-theme
 
 build: build-agent build-server build-api-test certs
 
@@ -10,6 +10,9 @@ build-api-test:
 	go build -o build/api-test cmd/test-api/main.go
 build-rpi:
 	GOOS=linux GOARCH=arm CGO_ENABLED=1 CC=arm-linux-gnu-gcc go build -o build/moon-server-rpi cmd/server/main.go
+
+build-kc-theme: 
+	npm run build-keycloak-theme --prefix keycloak/themes/moon-theme
 
 run: run-agent run-server 
 
@@ -37,3 +40,4 @@ clean-rpi:
 
 test:
 	go test -v ./internal/pkg/communication
+

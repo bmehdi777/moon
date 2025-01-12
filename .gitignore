@@ -5,6 +5,8 @@ moon.db
 config.yaml
 config.yml
 
+dist_keycloak
+
 
 # Node project
 # Created by https://www.toptal.com/developers/gitignore/api/node

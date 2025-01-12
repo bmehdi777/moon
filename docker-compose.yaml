@@ -1,6 +1,6 @@
 services:
   keycloak_web:
-    image: quay.io/keycloak/keycloak:23.0.2
+    image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak_web
     environment:
       KC_DB: postgres
@@ -19,6 +19,8 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     command: start-dev
+    volumes:
+      - ./keycloak/themes/moon-theme/dist_keycloak:/opt/keycloak/providers/
     depends_on:
       - keycloakdb
     ports:
