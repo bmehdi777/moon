@@ -1,5 +1,11 @@
+import Request from "@/components/request/Request";
+
 function Dashboard() {
-  return <>Hello world</>;
+  return (
+    <>
+      <Request />
+    </>
+  );
 }
 
 export default Dashboard;

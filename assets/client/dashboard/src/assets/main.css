@@ -66,6 +66,17 @@ nav {
 	color: #1a1a1a;
 }
 
+main {
+	margin: 2rem;
+}
+
+.card {
+	background: #fff;
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	border: 1px solid #eee;
+}
+
 @media (max-width: 768px) {
 	nav {
 		padding-right: 1rem;

@@ -1,0 +1,112 @@
+.dashboard {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 24px;
+}
+.dashboard.selected {
+	grid-template-columns: 1fr 1fr;
+}
+
+.request-table-container {
+	overflow-x: auto;
+}
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+th {
+	text-align: left;
+	padding: 16px;
+	border-bottom: 1px solid #eee;
+	font-weight: 500;
+	color: #666;
+}
+td {
+	padding: 16px;
+	border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+	background-color: #f9f9f9;
+	cursor: pointer;
+}
+
+tr.selected {
+	background-color: #f5f5f5;
+}
+
+.verb {
+	font-weight: 500;
+}
+.endpoint {
+	font-family: monospace;
+	font-size: 14px;
+	max-width: 300px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.status {}
+.timestamp {}
+
+.status-2xx,
+.verb-get {
+	color: #22c55e;
+}
+.status-3xx,
+.verb-post {
+	color: #3b82f6;
+}
+.status-4xx,
+.verb-put {
+	color: #eab308;
+}
+.status-5xx,
+.verb-delete {
+	color: #ef4444;
+}
+
+.details {
+	display: block;
+	padding: 24px;
+}
+
+.details-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 24px;
+}
+
+.close-button {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #666;
+	padding: 4px;
+}
+
+.close-button:hover {
+	color: #333;
+}
+
+.details h4 {
+	margin: 16px 0 8px;
+	color: #666;
+	font-size: 14px;
+}
+
+pre {
+	background: #f9f9f9;
+	padding: 12px;
+	border-radius: 4px;
+	font-family: monospace;
+	font-size: 13px;
+	overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+	.dashboard {
+		grid-template-columns: 1fr;
+	}
+}
