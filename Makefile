@@ -1,9 +1,13 @@
-.PHONY: build clean theme test build-kc-theme
+.PHONY: build clean theme test build-kc-theme build-agent-http clean-agent-http
 
-build: build-agent build-server build-api-test certs
+build: build-agent build-server build-api-test
 
-build-agent:
+build-agent: build-agent-http 
 	go build -o build/moon-agent cmd/agent/main.go
+	make clean-agent-http
+build-agent-http:
+	npm run build --prefix assets/client/dashboard
+	mv assets/client/dashboard/dist internal/pkg/agent/cmd/start/
 build-server:
 	go build -o build/moon-server cmd/server/main.go
 build-api-test:
@@ -31,6 +35,8 @@ clean: clean-agent clean-server clean-api-test
 
 clean-agent:
 	rm build/moon-agent
+clean-agent-http:
+	rm -r internal/pkg/agent/cmd/start/dist
 clean-server:
 	rm build/moon-server
 clean-api-test:

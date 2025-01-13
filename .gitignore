@@ -5,7 +5,9 @@ moon.db
 config.yaml
 config.yml
 
+dist
 dist_keycloak
+dist_agent
 
 
 # Node project
