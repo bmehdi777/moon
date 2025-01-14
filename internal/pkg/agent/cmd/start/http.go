@@ -20,10 +20,13 @@ func handleHttpServer() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/", apiHandler)
+	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request){
+
+	})
+	mux.HandleFunc("/api/healthcheck", healthcheck)
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		webappHandler(w, r, assets)
-
 	})
 
 	err = http.ListenAndServe(":9009", mux)
@@ -32,7 +35,7 @@ func handleHttpServer() {
 	}
 }
 
-func apiHandler(w http.ResponseWriter, r *http.Request) {
+func healthcheck(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Pong"))
 }
 
