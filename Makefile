@@ -6,7 +6,7 @@ build-agent: build-agent-http
 	go build -o build/moon-agent cmd/agent/main.go
 build-agent-http:
 	npm run build --prefix assets/client/dashboard
-	mv assets/client/dashboard/dist internal/pkg/agent/cmd/start/
+	mv assets/client/dashboard/dist/* internal/pkg/agent/cmd/start/dist/
 build-server:
 	go build -o build/moon-server cmd/server/main.go
 build-api-test:
@@ -33,15 +33,15 @@ certs:
 clean: clean-agent clean-server clean-api-test clean-agent-http
 
 clean-agent:
-	rm build/moon-agent
+	rm -rf ./build/moon-agent
 clean-agent-http:
-	rm -r internal/pkg/agent/cmd/start/dist
+	rm -rf ./internal/pkg/agent/cmd/start/dist/*
 clean-server:
-	rm build/moon-server
+	rm -rf ./build/moon-server
 clean-api-test:
-	rm build/api-test
+	rm -rf ./build/api-test
 clean-rpi:
-	rm build/moon-server-rpi
+	rm -rf ./build/moon-server-rpi
 
 test:
 	go test -v ./internal/pkg/communication

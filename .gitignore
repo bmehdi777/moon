@@ -5,7 +5,7 @@ moon.db
 config.yaml
 config.yml
 
-dist/*
+dist
 !dist/.gitkeep
 dist_keycloak
 dist_agent
