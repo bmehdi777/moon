@@ -4,7 +4,6 @@ build: build-agent build-server build-api-test
 
 build-agent: build-agent-http 
 	go build -o build/moon-agent cmd/agent/main.go
-	make clean-agent-http
 build-agent-http:
 	npm run build --prefix assets/client/dashboard
 	mv assets/client/dashboard/dist internal/pkg/agent/cmd/start/
@@ -31,7 +30,7 @@ certs:
 	mkdir certs
 	./scripts/makecert.sh
 
-clean: clean-agent clean-server clean-api-test
+clean: clean-agent clean-server clean-api-test clean-agent-http
 
 clean-agent:
 	rm build/moon-agent
