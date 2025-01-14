@@ -5,7 +5,8 @@ moon.db
 config.yaml
 config.yml
 
-dist
+dist/*
+!dist/.gitkeep
 dist_keycloak
 dist_agent
 
@@ -86,7 +87,6 @@ web_modules/
 .cache
 .parcel-cache
 out
-dist
 
 # Gatsby files
 .cache/

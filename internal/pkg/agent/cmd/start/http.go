@@ -7,7 +7,6 @@ import (
 )
 
 // Files aren't here before compiling
-
 //go:embed all:dist
 var distFolder embed.FS
 
