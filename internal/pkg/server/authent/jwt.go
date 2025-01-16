@@ -6,7 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/bmehdi777/moon/internal/pkg/server/config"
+	"moon/internal/pkg/server/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 

@@ -5,7 +5,7 @@
 #### Go
 
 ```sh
-go install github.com/bmehdi777/moon/cmd/agent@latest
+go install moon/cmd/agent@latest
 ```
 
 #### Manual
@@ -16,7 +16,7 @@ This project require at least __go 1.23.2__.
 Then, you can clone and compile everything :
 
 ```sh
-git clone https://github.com/bmehdi777/moon
+git clone https://moon
 cd moon
 make build-client
 ```

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bmehdi777/moon/internal/pkg/agent/cmd/login"
-	"github.com/bmehdi777/moon/internal/pkg/agent/cmd/start"
-	"github.com/bmehdi777/moon/internal/pkg/agent/files"
+	"moon/internal/pkg/agent/cmd/login"
+	"moon/internal/pkg/agent/cmd/start"
+	"moon/internal/pkg/agent/files"
 	"github.com/spf13/cobra"
 )
 

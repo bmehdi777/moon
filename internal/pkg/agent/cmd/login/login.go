@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/bmehdi777/moon/internal/pkg/agent/files"
+	"moon/internal/pkg/agent/files"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 )

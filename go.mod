@@ -1,4 +1,4 @@
-module github.com/bmehdi777/moon
+module moon
 
 go 1.23.2
 

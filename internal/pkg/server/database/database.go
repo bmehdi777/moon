@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/bmehdi777/moon/internal/pkg/server/config"
+	"moon/internal/pkg/server/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

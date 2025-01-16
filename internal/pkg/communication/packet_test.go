@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bmehdi777/moon/internal/pkg/communication"
+	"moon/internal/pkg/communication"
 )
 
 func TestPacketToByte(t *testing.T) {

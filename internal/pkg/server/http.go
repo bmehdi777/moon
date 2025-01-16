@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/bmehdi777/moon/internal/pkg/server/config"
-	"github.com/bmehdi777/moon/internal/pkg/server/database"
+	"moon/internal/pkg/server/config"
+	"moon/internal/pkg/server/database"
 	"gorm.io/gorm"
 )
 

@@ -13,9 +13,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/bmehdi777/moon/internal/pkg/agent/cmd/login"
-	"github.com/bmehdi777/moon/internal/pkg/agent/files"
-	"github.com/bmehdi777/moon/internal/pkg/communication"
+	"moon/internal/pkg/agent/cmd/login"
+	"moon/internal/pkg/agent/files"
+	"moon/internal/pkg/communication"
 )
 
 func connectToServer(serverAddrPort string, urlTarget *url.URL) error {

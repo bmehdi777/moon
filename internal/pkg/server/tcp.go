@@ -13,10 +13,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bmehdi777/moon/internal/pkg/communication"
-	"github.com/bmehdi777/moon/internal/pkg/server/authent"
-	"github.com/bmehdi777/moon/internal/pkg/server/config"
-	"github.com/bmehdi777/moon/internal/pkg/server/database"
+	"moon/internal/pkg/communication"
+	"moon/internal/pkg/server/authent"
+	"moon/internal/pkg/server/config"
+	"moon/internal/pkg/server/database"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
