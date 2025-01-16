@@ -1,5 +1,5 @@
 import "@/assets/request.css";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Details from "./Details";
 
 interface RequestLineProps {
@@ -48,6 +48,18 @@ function RequestLine(props: RequestLineProps) {
 function Request() {
   const [activeLineId, setActiveLineId] = useState<number>(-1);
 
+  useEffect(() => {
+    const eventSource: EventSource = new EventSource("/api/tunnels/status");
+
+    eventSource.onopen = () => console.log("Connection open");
+    eventSource.onerror = (err) => console.log("Error : ", err);
+    eventSource.onmessage = (msg) => {
+      console.log("msg : ", msg);
+    };
+
+    return () => eventSource.close();
+  }, []);
+
   return (
     <div className={`dashboard ${activeLineId !== -1 ? "selected" : ""}`}>
       <div className="card">
@@ -79,7 +91,7 @@ function Request() {
                 currentActiveLineId={activeLineId}
                 setCurrentActiveLineId={setActiveLineId}
                 method="PUT"
-                endpoint="/api/usrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddr"
+                endpoint="/api/test"
                 duration="0.5ms"
                 status={300}
                 timestamp="10-01-2025"
@@ -89,8 +101,9 @@ function Request() {
         </div>
       </div>
 
-      {activeLineId != -1 && <Details 
-			resetSelectedLine={()=> setActiveLineId(-1)} />}
+      {activeLineId != -1 && (
+        <Details resetSelectedLine={() => setActiveLineId(-1)} />
+      )}
     </div>
   );
 }

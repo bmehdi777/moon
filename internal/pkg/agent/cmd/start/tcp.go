@@ -18,7 +18,7 @@ import (
 	"moon/internal/pkg/communication"
 )
 
-func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
+func connectToServer(serverAddrPort string, urlTarget *url.URL, statistics *Statistics) error {
 	tokensCached, err := getReadyForAuth()
 	if err != nil {
 		return err
@@ -39,10 +39,10 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL) error {
 		return err
 	}
 
-	return handleRequest(client, urlTarget)
+	return handleRequest(client, urlTarget, statistics)
 }
 
-func handleRequest(client *communication.Client, url *url.URL) error {
+func handleRequest(client *communication.Client, url *url.URL, statistics *Statistics) error {
 	httpClient := &http.Client{
 		Timeout: time.Minute * 5, // same as google chrome
 	}
@@ -60,8 +60,8 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 			break
 		case communication.HttpRequest:
 			reader := bytes.NewReader(packetRequest.Payload.Data)
-			msgBufio := bufio.NewReader(reader)
-			req, err := http.ReadRequest(msgBufio)
+			reqBufio := bufio.NewReader(reader)
+			req, err := http.ReadRequest(reqBufio)
 			if err != nil {
 				return err
 			}
@@ -82,12 +82,24 @@ func handleRequest(client *communication.Client, url *url.URL) error {
 				return err
 			}
 
+			call := HttpCall{
+				Request: *req,
+			}
+
+			//respBufio := bufio.NewReader(&buf)
+			//respHttp, err := http.ReadResponse(respBufio, nil)
+			//if err == nil {
+			//	call.Response = *respHttp
+			//}
+
+			statistics.HttpCalls = append(statistics.HttpCalls, call)
+			statistics.Event <- 1
+
 			err = client.SendHttpResponse(buf.Bytes())
 			if err != nil {
 				return err
 			}
 			break
-
 		default:
 			// skip this packet
 			continue

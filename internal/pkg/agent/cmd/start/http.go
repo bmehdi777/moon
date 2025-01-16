@@ -2,17 +2,16 @@ package start
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
-	"path"
-	"strings"
+	"time"
 )
 
 //go:embed all:dist
 var distFolder embed.FS
 
-func handleHttpServer() {
+func handleHttpServer(statistics *Statistics) {
 	assets, err := fs.Sub(distFolder, "dist")
 	if err != nil {
 		panic(err)
@@ -20,9 +19,10 @@ func handleHttpServer() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request){
-
+	mux.HandleFunc("/api/tunnels/status", func(w http.ResponseWriter, r *http.Request) {
+		tunnelStatus(w, r, statistics)
 	})
+
 	mux.HandleFunc("/api/healthcheck", healthcheck)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -35,27 +35,35 @@ func handleHttpServer() {
 	}
 }
 
-func healthcheck(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Pong"))
+func tunnelStatus(w http.ResponseWriter, r *http.Request, statistics *Statistics) {
+	// SSE config
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	clientGone := r.Context().Done()
+
+	fmt.Println("Connection open")
+
+	fmt.Fprintf(w, "data: hello\n\n")
+	w.(http.Flusher).Flush()
+
+	tick := time.Tick(5 * time.Second)
+	for {
+		select {
+		case <-clientGone:
+			fmt.Println("Connection closed")
+			return
+		case <-tick:
+			fmt.Println("Heartbeat")
+			w.(http.Flusher).Flush()
+		case <-statistics.Event:
+			fmt.Println("Req : ", statistics.HttpCalls[0].Request.URL)
+			fmt.Fprintf(w, "data: %s\n\n", fmt.Sprintf(`{"req_uri": "test"}`))
+			w.(http.Flusher).Flush()
+		}
+	}
 }
 
-func webappHandler(w http.ResponseWriter, r *http.Request, fs fs.FS) {
-	filePath := path.Clean(r.URL.Path)
-	if filePath == "/" {
-		filePath = "index.html"
-	} else {
-		filePath = strings.TrimPrefix(filePath, "/")
-	}
-
-	file, err := fs.Open(filePath)
-	if os.IsNotExist(err) || filePath == "index.html" {
-		http.ServeFileFS(w, r, fs, "index.html")
-		return
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	defer file.Close()
-
-	http.FileServer(http.FS(fs)).ServeHTTP(w, r)
-}

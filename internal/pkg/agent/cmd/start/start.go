@@ -2,11 +2,22 @@ package start
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
 )
+
+type HttpCall struct {
+	Request  http.Request
+	Response http.Response
+}
+
+type Statistics struct {
+	HttpCalls []HttpCall
+	Event     chan int
+}
 
 func NewCmdStart() *cobra.Command {
 	startCmd := cobra.Command{
@@ -38,11 +49,15 @@ func handlerStart(cmd *cobra.Command, args []string) {
 		port = "4040"
 	}
 
-	go handleHttpServer()
+	statistics := Statistics{
+		HttpCalls: make([]HttpCall, 0),
+		Event:     make(chan int),
+	}
 
-	err = connectToServer(addr+":"+port, urlTarget)
+	go handleHttpServer(&statistics)
+
+	err = connectToServer(addr+":"+port, urlTarget, &statistics)
 	if err != nil {
 		fmt.Println("ERROR : ", err)
 	}
 }
-
