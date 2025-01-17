@@ -1,9 +1,0 @@
-{
-	"method": "GET",
-	"endpoint": "/api/users",
-	"duration": "120ms",
-	"status": "200",
-	"timestamp": "2025-10-01 01:01:000.00",
-	"headers": {},
-	"response": {},
-}

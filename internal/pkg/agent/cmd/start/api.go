@@ -47,7 +47,7 @@ func handleTunnelStatistics(w http.ResponseWriter, r *http.Request, statistics *
 
 	fmt.Println("Connection open")
 
-	fmt.Fprintf(w, "data: hello\n\n")
+	fmt.Fprintf(w, "data: %s\n\n", statistics.HttpCalls.Format())
 	w.(http.Flusher).Flush()
 
 	tick := time.Tick(5 * time.Second)

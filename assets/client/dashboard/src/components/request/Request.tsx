@@ -1,6 +1,7 @@
 import "@/assets/request.css";
 import { useEffect, useMemo, useState } from "react";
 import Details from "./Details";
+import { HttpMessage } from "@/types/request.types";
 
 interface RequestLineProps {
   method: "GET" | "PUT" | "POST" | "DELETE" | string;
@@ -14,6 +15,7 @@ interface RequestLineProps {
 
   lineId: number;
 }
+
 
 function RequestLine(props: RequestLineProps) {
   const isActive = useMemo(
@@ -47,6 +49,7 @@ function RequestLine(props: RequestLineProps) {
 
 function Request() {
   const [activeLineId, setActiveLineId] = useState<number>(-1);
+  const [httpCalls, setHttpCalls] = useState<HttpMessage[]>([]);
 
   useEffect(() => {
     const eventSource: EventSource = new EventSource("/api/tunnels/status");
@@ -54,6 +57,7 @@ function Request() {
     eventSource.onopen = () => console.log("Connection open");
     eventSource.onerror = (err) => console.log("Error : ", err);
     eventSource.onmessage = (msg) => {
+      setHttpCalls(JSON.parse(msg.data));
       console.log("msg : ", msg);
     };
 
@@ -62,7 +66,7 @@ function Request() {
 
   return (
     <div className={`dashboard ${activeLineId !== -1 ? "selected" : ""}`}>
-      <div className="card">
+      <div className="card card-req">
         <div className="request-table-container">
           <table>
             <thead>
@@ -75,34 +79,25 @@ function Request() {
               </tr>
             </thead>
             <tbody>
-              <RequestLine
-                lineId={0}
-                currentActiveLineId={activeLineId}
-                setCurrentActiveLineId={setActiveLineId}
-                method="GET"
-                endpoint="/api/user"
-                duration="0.5ms"
-                status={200}
-                timestamp="10-01-2025"
-              />
-
-              <RequestLine
-                lineId={1}
-                currentActiveLineId={activeLineId}
-                setCurrentActiveLineId={setActiveLineId}
-                method="PUT"
-                endpoint="/api/test"
-                duration="0.5ms"
-                status={300}
-                timestamp="10-01-2025"
-              />
+              {httpCalls.map((element, index) => (
+                <RequestLine
+                  lineId={index}
+                  currentActiveLineId={activeLineId}
+                  setCurrentActiveLineId={setActiveLineId}
+                  method={element.request.method}
+                  endpoint={element.request.path}
+                  duration="0.5ms"
+                  status={element.response.status}
+                  timestamp="10-01-2025"
+                />
+              ))}
             </tbody>
           </table>
         </div>
       </div>
 
       {activeLineId != -1 && (
-        <Details resetSelectedLine={() => setActiveLineId(-1)} />
+        <Details selectedHttpMessage={httpCalls[activeLineId]} resetSelectedLine={() => setActiveLineId(-1)} />
       )}
     </div>
   );

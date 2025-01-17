@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type HttpCall struct {
@@ -20,13 +21,13 @@ type Statistics struct {
 type RequestMessage struct {
 	Method  string `json:"method"`
 	Path    string `json:"path"`
-	Headers http.Header `json:"headers"`
+	Headers map[string]string `json:"headers"`
 	Body    string `json:"body"`
 }
 
 type ResponseMessage struct {
-	Status  string `json:"status"`
-	Headers http.Header `json:"headers"`
+	Status  int `json:"status"`
+	Headers map[string]string `json:"headers"`
 	Body    string `json:"body"`
 }
 
@@ -53,16 +54,27 @@ func (call *HttpCall) ToHttpMessage() HttpMessage {
 	}
 	respBody = string(respBodyBytes)
 
+
+	reqHeaders := make(map[string]string, 0)
+	for name, values := range call.Request.Header {
+		reqHeaders[name] = strings.Join(values, ", ")
+	}
+
+	respHeaders := make(map[string]string, 0)
+	for name, values := range call.Response.Header {
+		respHeaders[name] = strings.Join(values, ", ")
+	}
+
 	return HttpMessage{
 		Request: RequestMessage{
 			Method:  call.Request.Method,
 			Path:    call.Request.URL.Path,
-			Headers: call.Request.Header,
+			Headers: reqHeaders,
 			Body:    reqBody,
 		},
 		Response: ResponseMessage{
-			Status:  call.Response.Status,
-			Headers: call.Response.Header,
+			Status:  call.Response.StatusCode,
+			Headers: respHeaders,
 			Body:    respBody,
 		},
 	}

@@ -1,6 +1,5 @@
 .dashboard {
-	display: grid;
-	grid-template-columns: 1fr;
+	display: flex;
 	gap: 24px;
 }
 .dashboard.selected {
@@ -77,6 +76,9 @@ tr.selected {
 	align-items: center;
 	margin-bottom: 24px;
 }
+h4 {
+	display: inline-block;
+}
 
 .close-button {
 	background: none;
@@ -103,10 +105,20 @@ pre {
 	font-family: monospace;
 	font-size: 13px;
 	overflow-x: auto;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	max-width: 100%;
 }
 
-@media (max-width: 1024px) {
+.card.card-req {
+	width: 100%;
+}
+
+@media (max-width: 1146px) {
 	.dashboard {
-		grid-template-columns: 1fr;
+		flex-wrap: wrap;
+	}
+	.card {
+		width: 100% !important;
 	}
 }
