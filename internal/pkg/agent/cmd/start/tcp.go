@@ -82,23 +82,23 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 				return err
 			}
 
-			call := HttpCall{
-				Request: *req,
-			}
-
-			//respBufio := bufio.NewReader(&buf)
-			//respHttp, err := http.ReadResponse(respBufio, nil)
-			//if err == nil {
-			//	call.Response = *respHttp
-			//}
-
-			statistics.HttpCalls = append(statistics.HttpCalls, call)
-			statistics.Event <- 1
 
 			err = client.SendHttpResponse(buf.Bytes())
 			if err != nil {
 				return err
 			}
+
+			call := HttpCall{
+				Request: *req,
+			}
+			respBufio := bufio.NewReader(&buf)
+			respHttp, err := http.ReadResponse(respBufio, nil)
+			if err == nil {
+				call.Response = *respHttp
+			}
+
+			statistics.HttpCalls = append(statistics.HttpCalls, call)
+			statistics.Event <- 1
 			break
 		default:
 			// skip this packet

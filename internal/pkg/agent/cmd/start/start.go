@@ -2,22 +2,12 @@ package start
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-type HttpCall struct {
-	Request  http.Request
-	Response http.Response
-}
-
-type Statistics struct {
-	HttpCalls []HttpCall
-	Event     chan int
-}
 
 func NewCmdStart() *cobra.Command {
 	startCmd := cobra.Command{
