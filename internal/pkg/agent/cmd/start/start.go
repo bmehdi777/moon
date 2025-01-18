@@ -40,7 +40,7 @@ func handlerStart(cmd *cobra.Command, args []string) {
 	}
 
 	statistics := Statistics{
-		HttpCalls: make([]HttpCall, 0),
+		HttpCalls: make([]HttpMessage, 0),
 		Event:     make(chan int),
 	}
 

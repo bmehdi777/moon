@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"moon/internal/pkg/agent/cmd/login"
@@ -70,6 +72,25 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 			req.URL.Scheme = url.Scheme
 			req.RequestURI = ""
 
+			reqHeaders := make(map[string]string, 0)
+			for name, values := range req.Header {
+				reqHeaders[name] = strings.Join(values, ", ")
+			}
+			body, _ := io.ReadAll(req.Body)
+			// Replace a buffer to allow the body to be read again
+			req.Body = io.NopCloser(bytes.NewBuffer(body))
+			defer req.Body.Close()
+
+			// Pass request to http handler
+			call := HttpMessage{
+				Request: RequestMessage{
+					Method:  req.Method,
+					Path:    req.URL.Path,
+					Headers: reqHeaders,
+					Body:    string(body),
+				},
+			}
+
 			// send to urlTarget
 			resp, err := httpClient.Do(req)
 			if err != nil {
@@ -82,21 +103,31 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 				return err
 			}
 
-
 			err = client.SendHttpResponse(buf.Bytes())
 			if err != nil {
 				return err
 			}
 
-			call := HttpCall{
-				Request: *req,
-			}
+			// Pass response to http handler
 			respBufio := bufio.NewReader(&buf)
-			respHttp, err := http.ReadResponse(respBufio, nil)
+			respHttp, err := http.ReadResponse(respBufio, req)
 			if err == nil {
-				call.Response = *respHttp
+				respHeaders := make(map[string]string, 0)
+				for name, values := range respHttp.Header {
+					respHeaders[name] = strings.Join(values, ", ")
+				}
+				body, _ := io.ReadAll(respHttp.Body)
+				// No need to read again the body
+				defer respHttp.Body.Close()
+
+				call.Response = ResponseMessage{
+					Status:  respHttp.StatusCode,
+					Headers: respHeaders,
+					Body:    string(body),
+				}
 			}
 
+			// Send to sse handler
 			statistics.HttpCalls = append(statistics.HttpCalls, call)
 			statistics.Event <- 1
 			break
