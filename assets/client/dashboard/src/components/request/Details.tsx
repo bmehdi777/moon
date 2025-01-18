@@ -3,7 +3,7 @@ import {
   HttpMessageRequest,
   HttpMessageResponse,
 } from "@/types/request.types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DetailCode from "./DetailCode";
 
 interface DetailsProps {
@@ -13,11 +13,17 @@ interface DetailsProps {
 
 function Details(props: DetailsProps) {
   const { selectedHttpMessage, resetSelectedLine } = props;
+
+  const [currentTab, setCurrentTab] = useState<"request" | "response">(
+    "request",
+  );
   const [currentMessage, setCurrentMessage] = useState<
     HttpMessageRequest | HttpMessageResponse
   >(selectedHttpMessage.request);
 
-	console.log("body", currentMessage.body);
+  useEffect(() => {
+    setCurrentMessage(selectedHttpMessage[currentTab]);
+  }, [currentTab]);
 
   return (
     <div className="card">
@@ -36,21 +42,25 @@ function Details(props: DetailsProps) {
 
         <div className="tabs">
           <button
-            className={`tab ${currentMessage === selectedHttpMessage.request ? "active" : ""}`}
-            onClick={() => setCurrentMessage(selectedHttpMessage.request)}
+            className={`tab ${currentTab === "request" ? "active" : ""}`}
+            onClick={() => setCurrentTab("request")}
           >
             Request
           </button>
           <button
-            className={`tab ${currentMessage === selectedHttpMessage.response ? "active" : ""}`}
-            onClick={() => setCurrentMessage(selectedHttpMessage.response)}
+            className={`tab ${currentTab === "response" ? "active" : ""}`}
+            onClick={() => setCurrentTab("response")}
           >
             Response
           </button>
         </div>
 
         <DetailCode title="Headers" content={currentMessage.headers} />
-        <DetailCode title="Body" content={currentMessage.body} emptyMessage="No data in body." />
+        <DetailCode
+          title="Body"
+          content={currentMessage.body}
+          emptyMessage="No data in body."
+        />
       </div>
     </div>
   );
