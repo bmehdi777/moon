@@ -1,0 +1,33 @@
+.status-container {
+	padding: 8px 16px;
+	background: #f0fdf4;
+	border: 1px solid #86efac;
+	border-radius: 6px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.status-indicator {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #16a34a;
+}
+
+.status-text {
+	color: #16a34a;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.status-container.offline {
+	border: 1px solid #fecaca;
+	background: #fef2f2;
+}
+.status-container.offline .status-indicator {
+	background: #dc2626;
+}
+.status-container.offline .status-text {
+	color: #dc2626;
+}

@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router";
+import Status from "@/components/layout/Status";
 
 function Menu() {
   return (
@@ -8,6 +9,8 @@ function Menu() {
           <div className="logo-circle"></div>
           <div className="logo-text">MOON</div>
         </Link>
+
+				<Status />
 
         <div className="menu">
           <NavLink to="/dashboard" className="menu-item">

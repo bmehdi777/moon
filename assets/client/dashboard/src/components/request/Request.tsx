@@ -1,7 +1,8 @@
 import "@/assets/request.css";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import Details from "./Details";
 import { HttpMessage } from "@/types/request.types";
+import { HttpCallsContext } from "@/context/HttpCallContext";
 
 interface RequestLineProps {
   method: "GET" | "PUT" | "POST" | "DELETE" | string;
@@ -48,9 +49,9 @@ function RequestLine(props: RequestLineProps) {
 
 function Request() {
   const [activeLineId, setActiveLineId] = useState<number>(-1);
-  const [httpCalls, setHttpCalls] = useState<HttpMessage[]>([]);
-
   const [filter, setFilter] = useState<string>("");
+
+  const { httpCalls } = useContext(HttpCallsContext);
 
   const filteredHttpCalls: HttpMessage[] = useMemo(() => {
     return httpCalls.filter((call) =>
@@ -59,18 +60,6 @@ function Request() {
         .includes(filter),
     );
   }, [filter, httpCalls]);
-
-  useEffect(() => {
-    const eventSource: EventSource = new EventSource("/api/tunnels/status");
-
-    eventSource.onopen = () => console.log("Connection open");
-    eventSource.onerror = (err) => console.log("Error : ", err);
-    eventSource.onmessage = (msg) => {
-      setHttpCalls(JSON.parse(msg.data));
-    };
-
-    return () => eventSource.close();
-  }, []);
 
   return (
     <div className={`dashboard ${activeLineId !== -1 ? "selected" : ""}`}>
