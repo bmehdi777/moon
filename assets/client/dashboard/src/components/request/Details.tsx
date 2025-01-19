@@ -23,7 +23,7 @@ function Details(props: DetailsProps) {
 
   useEffect(() => {
     setCurrentMessage(selectedHttpMessage[currentTab]);
-  }, [currentTab]);
+  }, [currentTab, selectedHttpMessage]);
 
   return (
     <div className="card">
@@ -57,6 +57,7 @@ function Details(props: DetailsProps) {
 
         <DetailCode title="Headers" content={currentMessage.headers} />
         <DetailCode
+					disableToggleRaw={true}
           title="Body"
           content={currentMessage.body}
           emptyMessage="No data in body."

@@ -58,7 +58,6 @@ function Request() {
     eventSource.onerror = (err) => console.log("Error : ", err);
     eventSource.onmessage = (msg) => {
       setHttpCalls(JSON.parse(msg.data));
-      console.log("msg : ", msg);
     };
 
     return () => eventSource.close();

@@ -57,7 +57,6 @@ func handleTunnelStatistics(w http.ResponseWriter, r *http.Request, statistics *
 			fmt.Println("Connection closed")
 			return
 		case <-tick:
-			fmt.Println("Heartbeat")
 			w.(http.Flusher).Flush()
 		case <-statistics.Event:
 			fmt.Fprintf(w, "data: %s\n\n", statistics.HttpCalls.Format())

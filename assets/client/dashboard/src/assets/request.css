@@ -113,6 +113,9 @@ pre {
 .card.card-req {
 	width: 100%;
 }
+.dashboard.selected .card.card-req {
+	width: 50%;
+}
 
 
 .format-switch {
