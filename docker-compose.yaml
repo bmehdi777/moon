@@ -1,3 +1,5 @@
+name: "moon"
+
 services:
   keycloak_web:
     image: quay.io/keycloak/keycloak:26.0
@@ -35,5 +37,17 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
 
+  moondb:
+    image: postgres:16
+    volumes:
+      - postgres_data_moon:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: moon
+      POSTGRES_USER: moon
+      POSTGRES_PASSWORD: moon
+    ports:
+      - '5432:5432'
+
 volumes:
   postgres_data:
+  postgres_data_moon:

@@ -14,6 +14,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+type DatabaseDriver string
+
+const (
+	DRIVER_SQLITE   DatabaseDriver = "sqlite"
+	DRIVER_POSTGRES DatabaseDriver = "postgres"
+)
+
 type AppConfig struct {
 	CertKeyPath string `mapstructure:"cert_key"`
 	CertPemPath string `mapstructure:"cert_pub"`
@@ -27,28 +34,37 @@ type AppConfig struct {
 }
 
 type DatabaseConfig struct {
-	Path string `mapstructure:"database_path"`
+	Driver DatabaseDriver `mapstructure:"driver"`
+
+	// sqlite configuration
+	SqlitePath string `mapstructure:"sqlite_path"`
+
+	// postgres configuration
+	PostgresUser     string `mapstructure:"postgres_user"`
+	PostgresPassword string `mapstructure:"postgres_password"`
+	PostgresDbName   string `mapstructure:"postgres_dbname"`
+	PostgresPort     string `mapstructure:"postgres_port"`
 }
 
 // use keycloak
 type AuthConfig struct {
-	Realm string `mapstructure:"realm"`
-	BaseURL string `mapstructure:"base_url"`
+	Realm     string `mapstructure:"realm"`
+	BaseURL   string `mapstructure:"base_url"`
 	Algorithm string `mapstructure:"algorithm"`
-	Audience string `mapstructure:"audience"`
+	Audience  string `mapstructure:"audience"`
 }
 type RealmConfig struct {
-	Realm string `json:"realm"`
-	PublicKey string `json:"public_key"`
-	TokenService string `json:"token-service"`
+	Realm          string `json:"realm"`
+	PublicKey      string `json:"public_key"`
+	TokenService   string `json:"token-service"`
 	AccountService string `json:"account-service"`
-	TokenNotBefore int `json:"tokens-not-before"`
+	TokenNotBefore int    `json:"tokens-not-before"`
 }
 
 type Config struct {
-	App      AppConfig `mapstructure:"app"`
+	App      AppConfig      `mapstructure:"app"`
 	Database DatabaseConfig `mapstructure:"database"`
-	Auth     AuthConfig `mapstructure:"auth"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 
 	RealmConfig RealmConfig
 }
@@ -66,7 +82,7 @@ func InitConfig() {
 			TcpPort:     "4040",
 		},
 		Database: DatabaseConfig{
-			Path: "./moon.db",
+			SqlitePath: "./moon.db",
 		},
 	}
 
@@ -82,11 +98,11 @@ func InitConfig() {
 	}
 
 	verifyApp()
+	verifyDatabase()
 	verifyAuth()
 
 	GlobalConfig.RealmConfig = getPublicKey()
 }
-
 
 func verifyApp() {
 	if GlobalConfig.App.GlobalDomainName == "" {
@@ -106,6 +122,33 @@ func verifyAuth() {
 	}
 	if GlobalConfig.Auth.Audience == "" {
 		log.Fatalf("'auth.audience' can't be empty.")
+	}
+}
+
+func verifyDatabase() {
+	switch GlobalConfig.Database.Driver {
+	case DRIVER_SQLITE:
+		if GlobalConfig.Database.SqlitePath == "" {
+			log.Fatalf("'database.sqlite_path' can't be empty if 'database.driver' is set to 'sqlite'.")
+		}
+		break
+	case DRIVER_POSTGRES:
+		if GlobalConfig.Database.PostgresUser == "" {
+			log.Fatalf("'database.postgres_user' can't be empty if 'database.driver' is set to 'postgres'.")
+		}
+		if GlobalConfig.Database.PostgresPassword == "" {
+			log.Fatalf("'database.postgres_password' can't be empty if 'database.driver' is set to 'postgres'.")
+		}
+		if GlobalConfig.Database.PostgresDbName == "" {
+			log.Fatalf("'database.postgres_dbname' can't be empty if 'database.driver' is set to 'postgres'.")
+		}
+		if GlobalConfig.Database.PostgresPort == "" {
+			log.Fatalf("'database.postgres_port' can't be empty if 'database.driver' is set to 'postgres'.")
+		}
+		break
+	default:
+		log.Fatalf("'database.driver' can't be empty.")
+		break
 	}
 }
 
