@@ -12,16 +12,18 @@ type Statistics struct {
 }
 
 type RequestMessage struct {
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
+	Method    string            `json:"method"`
+	Path      string            `json:"path"`
+	Headers   map[string]string `json:"headers"`
+	Body      string            `json:"body"`
+	Datetime string            `json:"datetime"`
 }
 
 type ResponseMessage struct {
-	Status  int               `json:"status"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
+	Status   int               `json:"status"`
+	Headers  map[string]string `json:"headers"`
+	Body     string            `json:"body"`
+	Duration string            `json:"duration"`
 }
 
 type HttpMessage struct {

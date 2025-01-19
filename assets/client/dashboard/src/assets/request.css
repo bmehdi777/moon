@@ -221,6 +221,32 @@ input:checked + .slider:before {
 	text-align: center;
 }
 
+.search-container {
+	padding: 16px;
+	border-bottom: 1px solid #eee;
+}
+
+.search-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	font-size: 14px;
+	transition: border-color 0.2s;
+}
+
+.search-input:focus {
+	outline: none;
+	border-color: #333;
+}
+
+.no-results {
+	padding: 16px;
+	text-align: center;
+	color: #666;
+	font-style: italic;
+}
+
 @media (max-width: 1146px) {
 	.dashboard {
 		flex-wrap: wrap;

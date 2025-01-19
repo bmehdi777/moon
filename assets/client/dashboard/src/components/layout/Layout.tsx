@@ -5,12 +5,12 @@ import "@/assets/main.css";
 
 function Layout() {
   return (
-    <>
+    <div className="main-container">
       <Menu />
       <main>
         <Outlet />
       </main>
-    </>
+    </div>
   );
 }
 

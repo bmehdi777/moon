@@ -18,6 +18,7 @@ import (
 	"moon/internal/pkg/agent/cmd/login"
 	"moon/internal/pkg/agent/files"
 	"moon/internal/pkg/communication"
+	"moon/internal/pkg/utils"
 )
 
 func connectToServer(serverAddrPort string, urlTarget *url.URL, statistics *Statistics) error {
@@ -84,12 +85,15 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 			// Pass request to http handler
 			call := HttpMessage{
 				Request: RequestMessage{
-					Method:  req.Method,
-					Path:    req.URL.Path,
-					Headers: reqHeaders,
-					Body:    string(body),
+					Method:    req.Method,
+					Path:      req.URL.Path,
+					Headers:   reqHeaders,
+					Body:      string(body),
+					Datetime: fmt.Sprintf("%v", time.Now().Format("2006-01-02 15:04:05")),
 				},
 			}
+
+			start := time.Now()
 
 			// send to urlTarget
 			resp, err := httpClient.Do(req)
@@ -102,6 +106,8 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 			if err != nil {
 				return err
 			}
+
+			reqDuration := time.Since(start)
 
 			err = client.SendHttpResponse(buf.Bytes())
 			if err != nil {
@@ -121,9 +127,10 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 				defer respHttp.Body.Close()
 
 				call.Response = ResponseMessage{
-					Status:  respHttp.StatusCode,
-					Headers: respHeaders,
-					Body:    string(body),
+					Status:   respHttp.StatusCode,
+					Headers:  respHeaders,
+					Body:     string(body),
+					Duration: utils.FormatDuration(reqDuration),
 				}
 			}
 

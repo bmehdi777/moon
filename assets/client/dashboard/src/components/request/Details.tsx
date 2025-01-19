@@ -30,7 +30,7 @@ function Details(props: DetailsProps) {
       <div className="details">
         <div className="details-header">
           <div>
-            <span className="verb verb-get">
+            <span className={`verb verb-${selectedHttpMessage.request.method.toLowerCase()}`}>
               {selectedHttpMessage.request.method}{" "}
             </span>
             <span className="endpoint">{selectedHttpMessage.request.path}</span>

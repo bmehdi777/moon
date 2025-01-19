@@ -8,14 +8,13 @@ interface RequestLineProps {
   endpoint: string;
   duration: string;
   status: number;
-  timestamp: string;
+  datetime: string;
 
   currentActiveLineId: number;
   setCurrentActiveLineId: React.Dispatch<React.SetStateAction<number>>;
 
   lineId: number;
 }
-
 
 function RequestLine(props: RequestLineProps) {
   const isActive = useMemo(
@@ -36,13 +35,13 @@ function RequestLine(props: RequestLineProps) {
       className={isActive ? "selected" : ""}
       onClick={() => props.setCurrentActiveLineId(props.lineId)}
     >
-      <th className={`verb verb-${props.method.toLowerCase()}`}>
+      <td className={`verb verb-${props.method.toLowerCase()}`}>
         {props.method}
-      </th>
-      <th className="endpoint">{props.endpoint}</th>
-      <th className="duration">{props.duration}</th>
-      <th className={`status ${statusClassName}`}>{props.status}</th>
-      <th className="timestamp">{props.timestamp}</th>
+      </td>
+      <td className="endpoint">{props.endpoint}</td>
+      <td className="duration">{props.duration}</td>
+      <td className={`status ${statusClassName}`}>{props.status}</td>
+      <td className="timestamp">{props.datetime}</td>
     </tr>
   );
 }
@@ -50,6 +49,16 @@ function RequestLine(props: RequestLineProps) {
 function Request() {
   const [activeLineId, setActiveLineId] = useState<number>(-1);
   const [httpCalls, setHttpCalls] = useState<HttpMessage[]>([]);
+
+  const [filter, setFilter] = useState<string>("");
+
+  const filteredHttpCalls: HttpMessage[] = useMemo(() => {
+    return httpCalls.filter((call) =>
+      `${call.request.method} ${call.request.path} ${call.response.duration} ${call.response.status} ${call.request.datetime}`
+        .toLowerCase()
+        .includes(filter),
+    );
+  }, [filter, httpCalls]);
 
   useEffect(() => {
     const eventSource: EventSource = new EventSource("/api/tunnels/status");
@@ -66,6 +75,16 @@ function Request() {
   return (
     <div className={`dashboard ${activeLineId !== -1 ? "selected" : ""}`}>
       <div className="card card-req">
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by method, endpoint, or status..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            id="searchInput"
+          />
+        </div>
         <div className="request-table-container">
           <table>
             <thead>
@@ -74,29 +93,46 @@ function Request() {
                 <th>Endpoint</th>
                 <th>Duration</th>
                 <th>Status</th>
-                <th>Timestamp</th>
+                <th>Datetime</th>
               </tr>
             </thead>
             <tbody>
-              {httpCalls.map((element, index) => (
-                <RequestLine
-                  lineId={index}
-                  currentActiveLineId={activeLineId}
-                  setCurrentActiveLineId={setActiveLineId}
-                  method={element.request.method}
-                  endpoint={element.request.path}
-                  duration="0.5ms"
-                  status={element.response.status}
-                  timestamp="10-01-2025"
-                />
-              ))}
+              {httpCalls.length > 0 ? (
+                <>
+                  {filteredHttpCalls.length > 0 ? (
+                    filteredHttpCalls.map((element, index) => (
+                      <RequestLine
+                        lineId={index}
+                        currentActiveLineId={activeLineId}
+                        setCurrentActiveLineId={setActiveLineId}
+                        method={element.request.method}
+                        endpoint={element.request.path}
+                        duration={element.response.duration}
+                        status={element.response.status}
+                        datetime={element.request.datetime}
+                      />
+                    ))
+                  ) : (
+                    <tr className="no-results">
+                      <td colSpan={5}>No matching requests found.</td>
+                    </tr>
+                  )}
+                </>
+              ) : (
+                <tr className="no-results">
+                  <td colSpan={5}>No request here.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
       {activeLineId != -1 && (
-        <Details selectedHttpMessage={httpCalls[activeLineId]} resetSelectedLine={() => setActiveLineId(-1)} />
+        <Details
+          selectedHttpMessage={httpCalls[activeLineId]}
+          resetSelectedLine={() => setActiveLineId(-1)}
+        />
       )}
     </div>
   );
