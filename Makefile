@@ -2,11 +2,11 @@
 
 build: build-agent build-server build-api-test
 
-build-agent: build-agent-http 
+build-agent: build-agent-http
 	go build -o build/moon-agent cmd/agent/main.go
 build-agent-http:
 	npm run build --prefix assets/client/dashboard
-	rm -rf ./internal/pkg/agent/cmd/start/dist/assets 
+	rm -rf ./internal/pkg/agent/cmd/start/dist/assets
 	mv ./assets/client/dashboard/dist/* ./internal/pkg/agent/cmd/start/dist/
 build-server:
 	go build -o build/moon-server cmd/server/main.go
@@ -15,12 +15,12 @@ build-api-test:
 build-rpi:
 	GOOS=linux GOARCH=arm CGO_ENABLED=1 CC=arm-linux-gnu-gcc go build -o build/moon-server-rpi cmd/server/main.go
 
-build-kc-theme: 
+build-kc-theme:
 	npm run build-keycloak-theme --prefix keycloak/themes/moon-theme
 
-run: run-agent run-server 
+run: run-agent run-server
 
-run-agent: build-client
+run-agent: build-agent
 	./build/moon-agent
 run-server: build-server
 	./build/moon-server
@@ -46,4 +46,3 @@ clean-rpi:
 
 test:
 	go test -v ./internal/pkg/communication
-
