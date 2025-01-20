@@ -20,9 +20,12 @@ services:
       KC_HEALTH_ENABLED: 'true'
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-    command: start-dev
+
+    command: -v start-dev --import-realm
+    #command: export --file /opt/keycloak/data/import/test.json --realm moon
     volumes:
       - ./keycloak/themes/moon-theme/dist_keycloak:/opt/keycloak/providers/
+      - ./keycloak/imports:/opt/keycloak/data/import
     depends_on:
       - keycloakdb
     ports:
