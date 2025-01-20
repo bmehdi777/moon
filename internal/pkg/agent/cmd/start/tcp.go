@@ -85,10 +85,10 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 			// Pass request to http handler
 			call := HttpMessage{
 				Request: RequestMessage{
-					Method:    req.Method,
-					Path:      req.URL.Path,
-					Headers:   reqHeaders,
-					Body:      string(body),
+					Method:   req.Method,
+					Path:     req.URL.Path,
+					Headers:  reqHeaders,
+					Body:     string(body),
 					Datetime: fmt.Sprintf("%v", time.Now().Format("2006-01-02 15:04:05")),
 				},
 			}
@@ -136,7 +136,11 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 
 			// Send to sse handler
 			statistics.HttpCalls = append(statistics.HttpCalls, call)
-			statistics.Event <- 1
+
+			// No need to send to other goroutine if no EventListener
+			if statistics.EventListener > 0 {
+				statistics.Event <- 1
+			}
 			break
 		default:
 			// skip this packet

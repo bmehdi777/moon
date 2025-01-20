@@ -7,15 +7,16 @@ import (
 type HttpMessages []HttpMessage
 
 type Statistics struct {
-	HttpCalls HttpMessages
-	Event     chan int
+	HttpCalls     HttpMessages
+	Event         chan int
+	EventListener int
 }
 
 type RequestMessage struct {
-	Method    string            `json:"method"`
-	Path      string            `json:"path"`
-	Headers   map[string]string `json:"headers"`
-	Body      string            `json:"body"`
+	Method   string            `json:"method"`
+	Path     string            `json:"path"`
+	Headers  map[string]string `json:"headers"`
+	Body     string            `json:"body"`
 	Datetime string            `json:"datetime"`
 }
 

@@ -42,6 +42,7 @@ func handlerStart(cmd *cobra.Command, args []string) {
 	statistics := Statistics{
 		HttpCalls: make([]HttpMessage, 0),
 		Event:     make(chan int),
+		EventListener: 0,
 	}
 
 	go handleHttpServer(&statistics)
