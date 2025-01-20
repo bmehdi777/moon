@@ -40,7 +40,7 @@ func InitializeDBConn() (*gorm.DB, error) {
 	db.AutoMigrate(&User{})
 
 	//test := User{
-	//	KCUserId: "7e4ae9a4-efd8-44e1-8c26-53b0b9d10667",
+	//	KCUserId: "7b98b00f-fd7e-4d41-81d3-447a36c59200",
 	//}
 	//db.Create(&test)
 	return db, nil
