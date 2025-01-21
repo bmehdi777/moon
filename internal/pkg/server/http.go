@@ -1,23 +1,22 @@
 package server
 
 import (
-	"embed"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"moon/internal/pkg/server/api"
 	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/server/database"
+	"moon/internal/pkg/utils"
 
 	"gorm.io/gorm"
 )
 
-//go:embed all:dist
-var distFolder embed.FS
-
 func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
+
 	mux := http.NewServeMux()
 
 	appRouter := api.NewApp()
@@ -26,9 +25,20 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 		handleTunnelRequest(w, r, channelsPerDomain, db)
 	})
 
-	mux.Handle("/api/", middlewareTun(appRouter.ServeHttp, tunHandler))
-	mux.Handle("/web/", middlewareTun(appRouter.ServeHttp, tunHandler))
 
+	assets := os.DirFS(config.GlobalConfig.App.AssetsFolderPath)
+	webAssetsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		utils.HttpHandleAssets(w, r, assets, "/web/")
+	})
+
+	mux.Handle("/api/", middlewareTun(appRouter.ServeHttp, tunHandler))
+	// not sure I will keep the "/web/" : should the application be rendered
+	// as / or /web/ ? will see i guess
+	mux.Handle("/web/", middlewareTun(webAssetsHandler, tunHandler))
+
+
+	// TODO: may be changed I think : we would want to redirect everything to
+	// /web/ 
 	mux.HandleFunc("/", tunHandler)
 
 	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.HttpAddr, config.GlobalConfig.App.HttpPort)

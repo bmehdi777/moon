@@ -10,7 +10,7 @@ build-agent: build-agent-http
 build-agent-http:
 	npm run build --prefix assets/client/dashboard
 	rm -rf ./internal/pkg/agent/cmd/start/dist/assets
-	mv ./assets/client/dashboard/dist/* ./internal/pkg/agent/cmd/start/dist/
+	cp -r ./assets/client/dashboard/dist ./internal/pkg/agent/cmd/start/
 build-server:
 	go build -o build/moon-server cmd/server/main.go
 build-api-test:

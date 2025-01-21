@@ -31,6 +31,8 @@ type AppConfig struct {
 	TcpPort  string `mapstructure:"server_port"`
 
 	GlobalDomainName string `mapstructure:"global_domain_name"`
+
+	AssetsFolderPath string `mapstructure:"assets_folder_path"`
 }
 
 type DatabaseConfig struct {
@@ -107,6 +109,9 @@ func InitConfig() {
 func verifyApp() {
 	if GlobalConfig.App.GlobalDomainName == "" {
 		log.Fatalf("'app.global_domain_name' can't be empty.")
+	}
+	if GlobalConfig.App.AssetsFolderPath == "" {
+		log.Fatalf("'app.assets_path' can't be empty.")
 	}
 }
 
