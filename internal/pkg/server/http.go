@@ -1,6 +1,7 @@
 package server
 
 import (
+	"embed"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +14,9 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:embed all:dist
+var distFolder embed.FS
+
 func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	mux := http.NewServeMux()
 
@@ -22,7 +26,9 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 		handleTunnelRequest(w, r, channelsPerDomain, db)
 	})
 
-	mux.Handle("/api/", middlewareApiTun(appRouter.ServeHttp, tunHandler))
+	mux.Handle("/api/", middlewareTun(appRouter.ServeHttp, tunHandler))
+	mux.Handle("/web/", middlewareTun(appRouter.ServeHttp, tunHandler))
+
 	mux.HandleFunc("/", tunHandler)
 
 	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.HttpAddr, config.GlobalConfig.App.HttpPort)
@@ -31,7 +37,7 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	return err
 }
 
-func middlewareApiTun(api http.HandlerFunc, tun http.Handler) http.Handler {
+func middlewareTun(api http.HandlerFunc, tun http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Host == config.GlobalConfig.App.GlobalDomainName {
 			api.ServeHTTP(w, r)

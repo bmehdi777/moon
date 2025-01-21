@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"moon/internal/pkg/utils"
 	"net/http"
 )
 
@@ -25,7 +26,7 @@ func handleHttpServer(statistics *Statistics) {
 	mux.HandleFunc("/api/healthcheck", healthcheck)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		webappHandler(w, r, assets)
+		utils.HttpHandleAssets(w, r, assets, "/")
 	})
 
 	fmt.Println("Dashboard is accessible at : http://localhost:9009")
