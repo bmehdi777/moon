@@ -1,9 +1,7 @@
 import {
   HttpMessage,
-  HttpMessageRequest,
-  HttpMessageResponse,
 } from "@/types/request.types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DetailCode from "./DetailCode";
 
 interface DetailsProps {
@@ -17,13 +15,8 @@ function Details(props: DetailsProps) {
   const [currentTab, setCurrentTab] = useState<"request" | "response">(
     "request",
   );
-  const [currentMessage, setCurrentMessage] = useState<
-    HttpMessageRequest | HttpMessageResponse
-  >(selectedHttpMessage.request);
 
-  useEffect(() => {
-    setCurrentMessage(selectedHttpMessage[currentTab]);
-  }, [currentTab, selectedHttpMessage]);
+  const currentMessage = selectedHttpMessage[currentTab];
 
   return (
     <div className="card">
@@ -57,7 +50,7 @@ function Details(props: DetailsProps) {
 
         <DetailCode title="Headers" content={currentMessage.headers} />
         <DetailCode
-					disableToggleRaw={true}
+          disableToggleRaw={true}
           title="Body"
           content={currentMessage.body}
           emptyMessage="No data in body."
