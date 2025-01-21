@@ -1,4 +1,7 @@
-.PHONY: build clean theme test build-kc-theme build-agent-http clean-agent-http
+.PHONY: build clean theme test build-kc-theme build-agent-http clean-agent-http prepare
+
+prepare:
+	go mod tidy
 
 build: build-agent build-server build-api-test
 
