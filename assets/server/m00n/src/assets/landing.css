@@ -60,23 +60,23 @@ nav {
 	transition: all 0.3s ease;
 }
 
-.login-btn {
+.primary-btn {
 	border: 1px solid black;
 	background: transparent;
 }
 
-.login-btn:hover {
+.primary-btn:hover {
 	background: black;
 	color: white;
 }
 
-.register-btn {
+.secondary-btn {
 	background: black;
 	color: white;
 	border: 1px solid black;
 }
 
-.register-btn:hover {
+.secondary-btn:hover {
 	background: #333;
 }
 

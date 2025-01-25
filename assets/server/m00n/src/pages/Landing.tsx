@@ -1,7 +1,11 @@
 import "@/assets/landing.css";
+import { useKeycloak } from "@/contexts/KeycloakContext";
 
 function Landing() {
-	const currentYear: number = new Date().getFullYear();
+  const { authenticated, login, logout, register } =
+    useKeycloak();
+
+  const currentYear: number = new Date().getFullYear();
 
   return (
     <>
@@ -12,8 +16,20 @@ function Landing() {
             <div className="moon-name">Moon</div>
           </div>
           <div className="auth-buttons">
-            <button className="button login-btn">Login</button>
-            <button className="button register-btn">Register</button>
+            {!authenticated ? (
+              <>
+                <button className="button primary-btn" onClick={login}>
+                  Login
+                </button>
+                <button className="button secondary-btn" onClick={register}>
+                  Register
+                </button>
+              </>
+            ) : (
+              <button className="button secondary-btn" onClick={logout}>
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -51,7 +67,11 @@ function Landing() {
         <div className="container footer-content">
           <div>© {currentYear} Moon. All rights reserved.</div>
           <div>
-            <a target="_blank" href="https://github.com/bmehdi777/moon" className="github-link">
+            <a
+              target="_blank"
+              href="https://github.com/bmehdi777/moon"
+              className="github-link"
+            >
               GitHub
             </a>
           </div>
