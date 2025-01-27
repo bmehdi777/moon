@@ -1,9 +1,9 @@
 import "@/assets/landing.css";
 import { useKeycloak } from "@/contexts/KeycloakContext";
+import { Link } from "react-router";
 
 function Landing() {
-  const { authenticated, login, logout, register } =
-    useKeycloak();
+  const { authenticated, login, logout, register } = useKeycloak();
 
   const currentYear: number = new Date().getFullYear();
 
@@ -26,9 +26,14 @@ function Landing() {
                 </button>
               </>
             ) : (
-              <button className="button secondary-btn" onClick={logout}>
-                Logout
-              </button>
+              <>
+                <Link className="button primary-btn link-btn" to="/dashboard">
+                  Dashboard
+                </Link>
+                <button className="button secondary-btn" onClick={logout}>
+                  Logout
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -37,9 +42,9 @@ function Landing() {
       <main>
         <div className="container main-content">
           <h1>
-            Your Local Services,
+            Your local services,
             <br />
-            Available Worldwide
+            Available everywhere
           </h1>
           <p className="main-description">
             Moon creates secure tunnels from your machine to the internet,

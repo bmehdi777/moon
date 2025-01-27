@@ -80,6 +80,11 @@ nav {
 	background: #333;
 }
 
+.link-btn {
+	text-decoration: none;
+	color: black;
+}
+
 main {
 	padding: 80px 0;
 	text-align: center;
