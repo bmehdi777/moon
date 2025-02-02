@@ -1,6 +1,7 @@
 import "@/assets/landing.css";
 import { useKeycloak } from "@/contexts/KeycloakContext";
 import { Link } from "react-router";
+import "@/assets/main.css";
 
 function Landing() {
   const { authenticated, login, logout, register } = useKeycloak();
@@ -8,29 +9,29 @@ function Landing() {
   const currentYear: number = new Date().getFullYear();
 
   return (
-    <>
-      <nav>
-        <div className="container nav-content">
+    <div id="landing" className="flex flex-col bg-white text-black min-h-lvh">
+      <nav className="py-16 px-0">
+        <div className="flex my-0 mx-auto py-0 px-24 max-w-[1200px] justify-between items-center">
           <div className="logo-section">
             <div className="moon-logo"></div>
             <div className="moon-name">Moon</div>
           </div>
-          <div className="auth-buttons">
+          <div className="flex gap-6">
             {!authenticated ? (
               <>
-                <button className="button primary-btn" onClick={login}>
+                <button className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black border-solid border bg-transparent hover:bg-black hover:text-white" onClick={login}>
                   Login
                 </button>
-                <button className="button secondary-btn" onClick={register}>
+                <button className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black text-white bg-black hover:bg-[#333]" onClick={register}>
                   Register
                 </button>
               </>
             ) : (
               <>
-                <Link className="button primary-btn link-btn" to="/dashboard">
+                <Link className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black border-solid border bg-transparent hover:bg-black hover:text-white" to="/dashboard">
                   Dashboard
                 </Link>
-                <button className="button secondary-btn" onClick={logout}>
+                <button className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black text-white bg-black hover:bg-[#333]" onClick={logout}>
                   Logout
                 </button>
               </>
@@ -39,8 +40,8 @@ function Landing() {
         </div>
       </nav>
 
-      <main>
-        <div className="container main-content">
+      <main className="py-20 px-0 text-center flex-1">
+        <div className="py-0 px-24 max-w-[800px] my-0 mx-auto">
           <h1>
             Your local services,
             <br />
@@ -82,7 +83,7 @@ function Landing() {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
