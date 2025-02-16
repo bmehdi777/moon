@@ -19,19 +19,31 @@ function Landing() {
           <div className="flex gap-6">
             {!authenticated ? (
               <>
-                <button className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black border-solid border bg-transparent hover:bg-black hover:text-white" onClick={login}>
+                <button
+                  className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black border-solid border bg-transparent hover:bg-black hover:text-white"
+                  onClick={login}
+                >
                   Login
                 </button>
-                <button className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black text-white bg-black hover:bg-[#333]" onClick={register}>
+                <button
+                  className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black text-white bg-black hover:bg-[#333]"
+                  onClick={register}
+                >
                   Register
                 </button>
               </>
             ) : (
               <>
-                <Link className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black border-solid border bg-transparent hover:bg-black hover:text-white" to="/dashboard">
+                <Link
+                  className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black border-solid border bg-transparent hover:bg-black hover:text-white"
+                  to="/dashboard"
+                >
                   Dashboard
                 </Link>
-                <button className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black text-white bg-black hover:bg-[#333]" onClick={logout}>
+                <button
+                  className="py-2 px-4 rounded-3xl text-base cursor-pointer transition-all duration-[0.3s] ease-in-out border-black text-white bg-black hover:bg-[#333]"
+                  onClick={logout}
+                >
                   Logout
                 </button>
               </>
@@ -47,30 +59,40 @@ function Landing() {
             <br />
             Available everywhere
           </h1>
-          <p className="main-description">
+          <p className="text-xl text-[#666] mb-12 max-w-[600px] mx-auto">
             Moon creates secure tunnels from your machine to the internet,
             making your local services globally accessible in seconds.
           </p>
 
-          <div className="terminal">
-            <div className="terminal-controls">
-              <div className="control-dot red"></div>
-              <div className="control-dot yellow"></div>
-              <div className="control-dot green"></div>
+          <div className="max-w-[640px] my-0 mx-auto bg-[#f5f5f5] rounded-xl p-4 shadow-lg animate-[float_6s_ease-in-out_infinite]">
+            <div className="flex gap-2 mb-4">
+              <div className="w-3 h-3 rounded-4xl bg-[#ff5f56]"></div>
+              <div className="w-3 h-3 rounded-4xl bg-[#ffbd2e]"></div>
+              <div className="w-3 h-3 rounded-4xl bg-[#27c93f]"></div>
             </div>
-            <div className="terminal-content">
-              <p className="command">$ moon start http://localhost:3000</p>
-              <p className="output">🌒 Establishing tunnel...</p>
-              <p className="output">🌓 Tunnel created successfully!</p>
-              <p className="output">🌕 Your service is now available at:</p>
-              <p className="url">https://my-app.m00n.fr</p>
+            <div className="font-mono text-sm text-left">
+              <p className="animate-delay-0 my-2 mx-0 border-r-[2px] border-transparent text-[#2ea043] animate-typing whitespace-nowrap overflow-hidden w-0">
+                $ moon start http://localhost:3000
+              </p>
+              <p className="animate-delay-2 my-2 mx-0 border-r-[2px] border-transparent text-[#666] animate-typing-slow whitespace-nowrap overflow-hidden w-0">
+                🌒 Establishing tunnel...
+              </p>
+              <p className="animate-delay-3-5 my-2 mx-0 border-r-[2px] border-transparent animate-typing-slow whitespace-nowrap overflow-hidden w-0">
+                🌓 Tunnel created successfully!
+              </p>
+              <p className="animate-delay-5 my-2 mx-0 border-r-[2px] border-transparent animate-typing-slow whitespace-nowrap overflow-hidden w-0">
+                🌕 Your service is now available at:
+              </p>
+              <p className="animate-delay-6-5 my-2 mx-0 border-transparent text-black animate-url whitespace-nowrap overflow-hidden w-0 border-r-[4px]">
+                https://my-app.m00n.fr
+              </p>
             </div>
           </div>
         </div>
       </main>
 
-      <footer>
-        <div className="container footer-content">
+      <footer className="border-t-[#eee] py-8 px-0">
+        <div className="max-w-[1200px] my-0 mx-auto py-0 px-6 flex justify-between items-center text-[#666]">
           <div>© {currentYear} Moon. All rights reserved.</div>
           <div>
             <a
