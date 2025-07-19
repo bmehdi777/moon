@@ -5,49 +5,31 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 
 	"moon/internal/pkg/server/api"
 	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/server/database"
-	"moon/internal/pkg/utils"
 
 	"gorm.io/gorm"
 )
 
 func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
-
-	mux := http.NewServeMux()
-
-	appRouter := api.NewApp()
-
 	tunHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handleTunnelRequest(w, r, channelsPerDomain, db)
 	})
 
-
-	assets := os.DirFS(config.GlobalConfig.App.AssetsFolderPath)
-	webAssetsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		utils.HttpHandleAssets(w, r, assets, "/web/")
-	})
-
-	mux.Handle("/api/", middlewareTun(appRouter.ServeHttp, tunHandler))
-	// not sure I will keep the "/web/" : should the application be rendered
-	// as / or /web/ ? will see i guess
-	mux.Handle("/web/", middlewareTun(webAssetsHandler, tunHandler))
-
-
-	// TODO: may be changed I think : we would want to redirect everything to
-	// /web/ 
-	mux.HandleFunc("/", tunHandler)
+	topMux := http.NewServeMux()
+	apiMux := api.NewApiMux()
+	topMux.Handle("/api/", middlewareTun(http.StripPrefix("/api", apiMux), tunHandler))
+	topMux.HandleFunc("/", tunHandler)
 
 	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.HttpAddr, config.GlobalConfig.App.HttpPort)
 	log.Printf("HTTP server is up at %v", fullAddrFmt)
-	err := http.ListenAndServe(fullAddrFmt, mux)
+	err := http.ListenAndServe(fullAddrFmt, topMux)
 	return err
 }
 
-func middlewareTun(api http.HandlerFunc, tun http.Handler) http.Handler {
+func middlewareTun(api http.Handler, tun http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Host == config.GlobalConfig.App.GlobalDomainName {
 			api.ServeHTTP(w, r)
