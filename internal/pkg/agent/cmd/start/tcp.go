@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"moon/internal/pkg/agent/cmd/login"
+	"moon/internal/pkg/agent/cmd/auth"
 	"moon/internal/pkg/agent/files"
 	"moon/internal/pkg/communication"
 	"moon/internal/pkg/utils"
@@ -149,7 +149,7 @@ func handleRequest(client *communication.Client, url *url.URL, statistics *Stati
 	}
 }
 
-func getReadyForAuth() (*login.TokenDisk, error) {
+func getReadyForAuth() (*auth.TokenDisk, error) {
 	/*
 	* Get tokens from cache :
 	* If no auth file exist, user should login
@@ -166,7 +166,7 @@ func getReadyForAuth() (*login.TokenDisk, error) {
 		return nil, err
 	}
 
-	var tokensCached login.TokenDisk
+	var tokensCached auth.TokenDisk
 	err = json.Unmarshal(tokensCachedBytes, &tokensCached)
 	if err != nil {
 		return nil, errors.New("Can't parse auth file. It should be a JSON file.")
