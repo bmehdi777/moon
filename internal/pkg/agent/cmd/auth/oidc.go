@@ -45,6 +45,7 @@ func oidcTokenFlow(register bool) string {
 		os.Exit(1)
 	}
 
+
 	return keycloakJWT.AccessToken
 }
 

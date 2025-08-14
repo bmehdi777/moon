@@ -14,5 +14,11 @@ func NewCmdLogin() *cobra.Command {
 }
 
 func handlerLogin(cmd *cobra.Command, args []string) {
+	//accessToken := oidcTokenFlow(false)
 	oidcTokenFlow(false)
+
+	// it should have a refresh token (offline token)
+	// store it
+	// use it each time we want to *start* to have an access token
+	// use this access token at the begining of the tunnel
 }
