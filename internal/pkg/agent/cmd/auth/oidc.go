@@ -45,12 +45,6 @@ func oidcTokenFlow(register bool) string {
 		os.Exit(1)
 	}
 
-	// save cached tokens to disk
-	//err = files.SaveToConfigFile(files.AUTH_FILENAME, diskTokenBytes)
-	//if err != nil {
-	//	fmt.Println("Can't save authentification data to disk : ", err)
-	//}
-
 	return keycloakJWT.AccessToken
 }
 

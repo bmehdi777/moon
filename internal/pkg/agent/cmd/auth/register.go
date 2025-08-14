@@ -14,5 +14,5 @@ func NewCmdRegister() *cobra.Command {
 }
 
 func handlerRegister(cmd *cobra.Command, args []string) {
-	oidcFlow(true)
+	oidcTokenFlow(true)
 }

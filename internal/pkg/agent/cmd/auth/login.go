@@ -14,5 +14,5 @@ func NewCmdLogin() *cobra.Command {
 }
 
 func handlerLogin(cmd *cobra.Command, args []string) {
-	oidcFlow(false)
+	oidcTokenFlow(false)
 }
