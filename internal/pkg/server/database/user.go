@@ -4,20 +4,11 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	KCUserId string
-	DomainRecordID int
-	DomainRecord DomainRecord
+	KCUserID string
 }
 
-type DomainRecord struct {
-	gorm.Model
-	DNSRecord      string
-	ConnectionOpen bool
-}
-
-
-func FindDomainRecordByName(name string, db *gorm.DB) *DomainRecord {
-	var record DomainRecord
-	db.First(&record, "dns_record = ?", name)
-	return &record
+func FindUserByKCUID(kcUid string, db *gorm.DB) (*User, *gorm.DB) {
+	var user User
+	res := db.First(&user, "kc_user_id = ?", kcUid)
+	return &user, res
 }

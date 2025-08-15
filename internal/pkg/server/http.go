@@ -44,8 +44,8 @@ func handleTunnelRequest(w http.ResponseWriter, r *http.Request, channelsPerDoma
 	// so we need to process the domain name
 	hostRequest := r.Host
 	log.Printf("Host url : %v", hostRequest)
-	record := database.FindDomainRecordByName(hostRequest, db)
-	if record == nil {
+	record, res := database.FindRecordByDomainFQDN(hostRequest, db)
+	if res.RowsAffected == 0 {
 		http.Error(w, "Record not found.", http.StatusNotFound)
 		return
 	}

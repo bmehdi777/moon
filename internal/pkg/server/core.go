@@ -17,6 +17,7 @@ import (
 	"moon/internal/pkg/server/authent"
 	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/server/database"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -80,7 +81,12 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 	}
 
 	defer channelsDomains.Delete(channelsName)
-	defer db.Model(&database.DomainRecord{}).Where("dns_record = ?", channelsName).Update("connection_open", false)
+	defer func() {
+		// close connection
+		record, _ := database.FindRecordByDomainFQDN(channelsName, db)
+		record.ConnectionOpen = false
+		db.Save(&record)
+	}()
 
 	log.Printf("Connection started with %v", client.Connection.RemoteAddr())
 	var reply *http.Request
@@ -170,6 +176,7 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 		return "", ErrInvalidToken
 	}
 
+	// tell client he is connected
 	client.SendAuthorized()
 
 	sub, err := accessToken.Claims.GetSubject()
@@ -178,32 +185,40 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 	}
 	fmt.Println("sub: ", sub)
 
-	// create domain record in db
-	var user database.User
-	db.First(&user, "kc_user_id = ? ", sub)
-
-	// no domain record registered
-	var dnsRecord string
-	if user.DomainRecordID == 0 {
-		dnsRecord = uuid.NewString() + "." + config.GlobalConfig.App.GlobalDomainName
-		record := database.DomainRecord{
-			DNSRecord:      dnsRecord,
-			ConnectionOpen: true,
-		}
-		db.Model(&user).Update("DomainRecord", record)
-	} else {
-		// refacto one day
-		var domainRecord database.DomainRecord
-		db.Table("domain_records").Select("domain_records.dns_record").Joins("INNER JOIN users ON domain_records.ID = users.domain_record_id").Scan(&domainRecord)
-		dnsRecord = domainRecord.DNSRecord
-		log.Printf("dns record : %v", user.DomainRecord.DNSRecord)
-		db.Model(&database.DomainRecord{}).Where("dns_record = ?", dnsRecord).Update("connection_open", true)
+	user, res := database.FindUserByKCUID(sub, db)
+	if res.RowsAffected == 0 {
+		return "", fmt.Errorf("User doesn't exist")
 	}
 
-	log.Printf("Connection open : http://%v", dnsRecord)
+	record, res := database.FindRecordByUserID(user.ID, db)
+	var fqdn string
+	if res.RowsAffected == 0 {
+		// record doesn't exist
+		fqdn = uuid.NewString() + "." + config.GlobalConfig.App.GlobalDomainName
+		domainName := database.DomainName{
+			FQDN: fqdn,
+		}
+		db.Create(&domainName)
 
-	// create channel
-	channels.Add(dnsRecord)
+		newRecord := database.Record{
+			UserID:         user.ID,
+			User:           *user,
+			DomainNameID:   domainName.ID,
+			DomainName:     domainName,
+			ConnectionOpen: true,
+		}
+		db.Create(&newRecord)
+	} else {
+		// record exist
+		record.ConnectionOpen = true
+		db.Save(&record)
+		domainName, _ := database.FindDomainNameById(record.DomainNameID, db)
+		fqdn = domainName.FQDN
+	}
 
-	return dnsRecord, nil
+	log.Printf("Connection open : http://%v", fqdn)
+
+	channels.Add(fqdn)
+
+	return fqdn, nil
 }

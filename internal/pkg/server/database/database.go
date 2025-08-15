@@ -36,11 +36,12 @@ func InitializeDBConn() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&DomainRecord{})
 	db.AutoMigrate(&User{})
-
+	db.AutoMigrate(&DomainName{})
+	db.AutoMigrate(&Record{})
+	
 	//test := User{
-	//	KCUserId: "7b98b00f-fd7e-4d41-81d3-447a36c59200",
+	//	KCUserID: "7b98b00f-fd7e-4d41-81d3-447a36c59200",
 	//}
 	//db.Create(&test)
 	return db, nil
