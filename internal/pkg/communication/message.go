@@ -23,8 +23,10 @@ func (mt MessageType) String() string {
 		return "HttpRequest"
 	case HttpResponse:
 		return "HttpResponse"
-	case InvalidToken:
-		return "InvalidToken"
+	case Unauthorized:
+		return "Unauthorized"
+	case Authorized:
+		return "Authorized"
 	default:
 		return fmt.Sprintf("%d", mt)
 	}
@@ -40,7 +42,8 @@ const (
 	HttpRequest
 	HttpResponse
 
-	InvalidToken
+	Authorized
+	Unauthorized
 )
 
 // Complexe payload are converted to type

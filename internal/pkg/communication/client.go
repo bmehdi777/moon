@@ -117,8 +117,17 @@ func (c *Client) SendHttpResponse(data []byte) error {
 	return nil
 }
 
-func (c *Client) SendInvalidToken() error {
-	packet := NewPacket(InvalidToken, nil)
+func (c *Client) SendUnauthorized() error {
+	packet := NewPacket(Unauthorized, nil)
+	err := c.Write(packet)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) SendAuthorized() error {
+	packet := NewPacket(Authorized, nil)
 	err := c.Write(packet)
 	if err != nil {
 		return err
