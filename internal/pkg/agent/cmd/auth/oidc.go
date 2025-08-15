@@ -2,16 +2,18 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"moon/internal/pkg/agent/files"
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
-	"encoding/json"
-	"golang.org/x/oauth2"
 	"os"
 	"strconv"
+	"strings"
+
+	"golang.org/x/oauth2"
 )
 
 // to put in a parameter
@@ -43,6 +45,18 @@ func oidcTokenFlow(register bool) string {
 	if err != nil {
 		fmt.Println("An error occured while parsing the token ", err)
 		os.Exit(1)
+	}
+
+	diskTokenBytes, err := json.Marshal(keycloakJWT.ToDisk())
+	if err != nil {
+		fmt.Println("Can't parse to json disk token : ", err)
+		os.Exit(1)
+	}
+
+	// todo: encode this with a local password ??
+	err = files.SaveToConfigFile(files.AUTH_FILENAME, diskTokenBytes)
+	if err != nil {
+		fmt.Println("Can't save authentification data to disk : ", err)
 	}
 
 

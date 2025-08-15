@@ -163,12 +163,14 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 	authMsg := msg.(*communication.AuthMessage)
 	accessToken, err := authent.VerifyJwt(authMsg.Token)
 	if err != nil {
-		err = client.SendInvalidToken()
+		err = client.SendUnauthorized()
 		if err != nil {
 			return "", err
 		}
 		return "", ErrInvalidToken
 	}
+
+	client.SendAuthorized()
 
 	sub, err := accessToken.Claims.GetSubject()
 	if err != nil {
