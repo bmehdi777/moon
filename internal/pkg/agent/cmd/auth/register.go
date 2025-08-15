@@ -16,4 +16,5 @@ func NewCmdRegister() *cobra.Command {
 func handlerRegister(cmd *cobra.Command, args []string) {
 	oidcTokenFlow(true)
 	// we end up with an access token : what do we do here ?
+	// call POST /user on api to register user to database
 }

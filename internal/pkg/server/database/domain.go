@@ -7,11 +7,6 @@ type DomainName struct {
 	FQDN string
 }
 
-func CreateDomainName(name string, db *gorm.DB) {
-	domain := DomainName{FQDN: name}
-	db.Create(&domain)
-}
-
 func FindDomainNameById(id uint, db *gorm.DB) (*DomainName, *gorm.DB) {
 	var domain DomainName
 	res := db.First(&domain, "id = ?", id)

@@ -19,7 +19,7 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	})
 
 	topMux := http.NewServeMux()
-	apiMux := api.NewApiMux()
+	apiMux := api.NewApiMux(db)
 	topMux.Handle("/api/", middlewareTun(http.StripPrefix("/api", apiMux), tunHandler))
 	topMux.HandleFunc("/", tunHandler)
 

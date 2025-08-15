@@ -1,8 +1,12 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
 
-func NewApiMux() *http.ServeMux {
+	"gorm.io/gorm"
+)
+
+func NewApiMux(db *gorm.DB) *http.ServeMux {
 	apiMux := http.NewServeMux()
 
 	apiHealth := Health{}
@@ -10,6 +14,11 @@ func NewApiMux() *http.ServeMux {
 
 	apiVersion := Version{}
 	apiMux.HandleFunc("/version", apiVersion.router)
+
+	apiUser := User{
+		DB: db,
+	}
+	apiMux.HandleFunc("/user", apiUser.router)
 
 	return apiMux
 }
