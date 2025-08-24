@@ -18,7 +18,7 @@ func NewApiMux(db *gorm.DB) *http.ServeMux {
 	apiUser := User{
 		DB: db,
 	}
-	apiMux.HandleFunc("/user", apiUser.router)
+	apiMux.HandleFunc("/users", apiUser.router)
 
 	return apiMux
 }

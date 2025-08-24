@@ -38,6 +38,8 @@ func (a *User) register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	}
 
+	log.Println("Sub received : ", sub)
+
 	newUser := database.User{
 		KCUserID: sub,
 	}
