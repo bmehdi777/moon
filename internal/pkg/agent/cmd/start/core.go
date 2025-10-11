@@ -26,7 +26,8 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL, statistics *Stat
 	if err != nil {
 		return err
 	}
-	// needed to be changed in prod environment
+
+	// TODO: needed to be changed in prod environment
 	config := tls.Config{InsecureSkipVerify: true}
 	conn, err := tls.Dial("tcp", serverAddrPort, &config)
 	if err != nil {
