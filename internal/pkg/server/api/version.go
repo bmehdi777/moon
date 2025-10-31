@@ -1,6 +1,10 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/rs/zerolog/log"
+)
 
 const SERVER_VERSION = "0.0.1"
 
@@ -16,5 +20,8 @@ func (v *Version) router(w http.ResponseWriter, r *http.Request) {
 }
 
 func (v *Version) get(w http.ResponseWriter, _ *http.Request) {
+	log.Trace().Msg("Begin version")
+	defer log.Trace().Msg("End version")
+
 	w.Write([]byte(SERVER_VERSION + "\n"))
 }

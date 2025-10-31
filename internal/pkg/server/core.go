@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"moon/internal/pkg/server/database"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -27,7 +27,7 @@ var ErrInvalidToken = fmt.Errorf("Token is not valid.")
 func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 	cert, err := tls.LoadX509KeyPair(config.GlobalConfig.App.CertPemPath, config.GlobalConfig.App.CertKeyPath)
 	if err != nil {
-		log.Fatalf("Can't load TLS certificates : %v", err)
+		log.Fatal().Stack().Err(err).Msg("Can't load TLS certificates")
 		return
 	}
 	configTls := tls.Config{Certificates: []tls.Certificate{cert}}
@@ -36,16 +36,16 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.TcpAddr, config.GlobalConfig.App.TcpPort)
 	listener, err := tls.Listen("tcp", fullAddrFmt, &configTls)
 	if err != nil {
-		log.Fatalf("Can't setup port :  %v", err)
+		log.Fatal().Stack().Err(err).Msg("Can't setup port")
 		return
 	}
 	defer listener.Close()
-	log.Printf("TCP Server is up at %v", fullAddrFmt)
+	log.Info().Msgf("TCP Server is up at %v", fullAddrFmt)
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Fatalf("Error while accepting a connection : %v", err)
+			log.Fatal().Stack().Err(err).Msg("Error while accepting a connection")
 			continue
 		}
 
@@ -61,23 +61,24 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 
 func handleClient(client *communication.Client, channelsDomains *ChannelsDomains, db *gorm.DB) {
 	defer client.Connection.Close()
-	defer log.Printf("Connection closed with %v", client.Connection.RemoteAddr())
+	defer log.Trace().Msgf("Connection closed with %v", client.Connection.RemoteAddr())
 
 	// create random domain name
 	channelsName, err := createOrSelectChannelForUser(client, channelsDomains, db)
 	if err != nil {
 		if errors.Is(err, ErrInvalidToken) {
 			// drop connection
-			log.Printf("Invalid token from %v", client.Connection.RemoteAddr())
+			log.Warn().Msgf("Invalid token from %v", client.Connection.RemoteAddr())
 			return
 		}
-		log.Printf("Error while creating channels : %v", err)
+		log.Error().Stack().Err(err).Msg("Error while creating channels")
 		return
 	}
 
 	channels := channelsDomains.Get(channelsName)
 	if channels == nil {
-		log.Fatalf("Error while retrieving channel.")
+		log.Fatal().Msg("Error while retrieving channel")
+		return
 	}
 
 	defer channelsDomains.Delete(channelsName)
@@ -88,7 +89,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 		db.Save(&record)
 	}()
 
-	log.Printf("Connection started with %v", client.Connection.RemoteAddr())
+	log.Info().Msgf("Connection started with %v", client.Connection.RemoteAddr())
 	var reply *http.Request
 	readChan := make(chan *communication.Packet)
 
@@ -97,7 +98,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			responsePacket, err := client.Read()
 			if err != nil {
 				if err != io.EOF {
-					log.Fatalf("Error while reading response from %v : %v", client.Connection.RemoteAddr(), err)
+					log.Fatal().Stack().Err(err).Msgf("Error while reading response from %v", client.Connection.RemoteAddr())
 				}
 				continue
 			}
@@ -111,7 +112,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			var buf bytes.Buffer
 			err := reply.Write(&buf)
 			if err != nil {
-				log.Fatalf("Error while writing request to wire : %v", err)
+				log.Fatal().Stack().Err(err).Msg("Error while writing request to wire")
 				return
 			}
 			bufBytes := buf.Bytes()
@@ -119,7 +120,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			// redirecting HTTP request to TCP connection
 			err = client.SendHttpRequest(bufBytes)
 			if err != nil {
-				log.Fatalf("Error while sending bytes to %v : %v", client.Connection.RemoteAddr(), err)
+				log.Fatal().Stack().Err(err).Msgf("Error while sending bytes to %v", client.Connection.RemoteAddr())
 				return
 			}
 		case response := <-readChan:
@@ -129,7 +130,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			case communication.Ping:
 				err = client.SendPong()
 				if err != nil {
-					log.Fatalf("Error while responding to ping %v", err)
+					log.Fatal().Stack().Err(err).Msg("Error while responding to ping")
 					return
 				}
 			case communication.HttpResponse:
@@ -137,13 +138,13 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 				respBufio := bufio.NewReader(reader)
 				resp, err := http.ReadResponse(respBufio, reply)
 				if err != nil {
-					log.Fatalf("Error while converting bytes to HTTP response %v", err)
+					log.Fatal().Stack().Err(err).Msg("Error while converting bytes to HTTP response")
 					return
 				}
 				reply = nil
 				channels.ResponseChannel <- resp
 			default:
-				log.Fatalf("Weird packet received. Skipping it.")
+				log.Warn().Msg("Weird packet received. Skipping it.")
 			}
 		}
 	}
@@ -216,7 +217,7 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 		fqdn = domainName.FQDN
 	}
 
-	log.Printf("Connection open : http://%v", fqdn)
+	log.Info().Msgf("Connection open : http://%v", fqdn)
 
 	channels.Add(fqdn)
 

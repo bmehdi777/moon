@@ -1,6 +1,10 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/rs/zerolog/log"
+)
 
 type Health struct{}
 
@@ -14,5 +18,8 @@ func (h *Health) router(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Health) get(w http.ResponseWriter, _ *http.Request) {
+	log.Trace().Msg("Begin health")
+	defer log.Trace().Msg("End health")
+
 	w.WriteHeader(http.StatusOK)
 }

@@ -1,11 +1,13 @@
 package server
 
 import (
-	"log"
 	"os"
 
 	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/server/database"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func Run() {
@@ -13,7 +15,7 @@ func Run() {
 
 	db, err := database.InitializeDBConn()
 	if err != nil {
-		log.Fatalf("Can't connect to the database.")
+		log.Fatal().Stack().Err(err).Msg("Can't connect to the database.")
 		os.Exit(1)
 	}
 
@@ -24,6 +26,10 @@ func Run() {
 
 	// http connection between server and the world
 	if err := httpServe(&channelPerDomain, db); err != nil {
-		log.Fatalf("Error : %v ", err)
+		log.Fatal().Stack().Err(err)
 	}
+}
+
+func configureLogger() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 }

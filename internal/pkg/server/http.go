@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"moon/internal/pkg/server/api"
@@ -11,6 +10,8 @@ import (
 	"moon/internal/pkg/server/database"
 
 	"gorm.io/gorm"
+
+	"github.com/rs/zerolog/log"
 )
 
 func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
@@ -24,7 +25,7 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	topMux.HandleFunc("/", tunHandler)
 
 	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.HttpAddr, config.GlobalConfig.App.HttpPort)
-	log.Printf("HTTP server is up at %v", fullAddrFmt)
+	log.Info().Msgf("HTTP server is up at %v", fullAddrFmt)
 	err := http.ListenAndServe(fullAddrFmt, topMux)
 	return err
 }
@@ -43,7 +44,7 @@ func handleTunnelRequest(w http.ResponseWriter, r *http.Request, channelsPerDoma
 	// have to ensure request are going to the right chan
 	// so we need to process the domain name
 	hostRequest := r.Host
-	log.Printf("Host url : %v", hostRequest)
+	log.Trace().Msgf("Request from host url '%v'", hostRequest)
 	record, res := database.FindRecordByDomainFQDN(hostRequest, db)
 	if res.RowsAffected == 0 {
 		http.Error(w, "Record not found.", http.StatusNotFound)
