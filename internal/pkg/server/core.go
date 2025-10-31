@@ -114,7 +114,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 	// Start the watchdog timer :
 	// if no ping/heartbeat while an amount of time
 	// we close the connection
-	client.Watchdog.Timer = *time.NewTimer(communication.WATCHDOG_TIME)
+	client.Watchdog.Timer = time.NewTimer(communication.WATCHDOG_TIME)
 
 	for {
 		select {
@@ -143,7 +143,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			case communication.ConnectionClose:
 				return
 			case communication.Ping:
-				log.Trace().Msgf("Ping received for %v", remoteAddr)
+				log.Debug().Msgf("Ping received for %v", remoteAddr)
 				client.Watchdog.Timer.Reset(communication.WATCHDOG_TIME)
 				err = client.SendPong()
 				if err != nil {
@@ -201,7 +201,6 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("sub: ", sub)
 
 	user, res := database.FindUserByKCUID(sub, db)
 	if res.RowsAffected == 0 {

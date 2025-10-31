@@ -15,7 +15,7 @@ const (
 const WATCHDOG_TIME = 10 * time.Second
 
 type Watchdog struct {
-	Timer  time.Timer
+	Timer  *time.Timer
 	Action chan WatchdogAction
 }
 
@@ -105,7 +105,7 @@ func (c *Client) SendPing() error {
 }
 
 func (c *Client) SendPong() error {
-	packet := NewPacket(Ping, nil)
+	packet := NewPacket(Pong, nil)
 	err := c.Write(packet)
 	if err != nil {
 		return err

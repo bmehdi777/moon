@@ -58,6 +58,8 @@ func handleConnection(client *communication.Client, url *url.URL, statistics *St
 		Timeout: time.Minute * 5,
 	}
 
+	heartbeat(client)
+
 	for {
 		packetRequest, err := client.Read()
 		if err != nil {
@@ -93,6 +95,7 @@ func handleConnection(client *communication.Client, url *url.URL, statistics *St
 			sendStatsToLocal(&buf, req, messageLocalApi, reqDuration, statistics)
 
 			break
+		case communication.Pong:
 		default:
 			// skip this packet
 			continue
@@ -221,4 +224,18 @@ func interceptSignal(client *communication.Client) {
 }
 
 // Heartbeat to detect lost connection
-func heartbeat() {}
+func heartbeat(client *communication.Client) {
+	ticker := time.NewTicker(2 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				err := client.SendPing()
+				if err != nil {
+					fmt.Println("Can't contact server")
+					os.Exit(1)
+				}
+			}
+		}
+	}()
+}
