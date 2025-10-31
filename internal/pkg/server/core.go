@@ -16,6 +16,7 @@ import (
 	"moon/internal/pkg/server/authent"
 	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/server/database"
+	"moon/internal/pkg/server/metrics"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -55,6 +56,7 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 		}
 
 		client := communication.NewClient(conn.(*tls.Conn))
+		metrics.Metrics.TunActiveConnection.Inc()
 		go handleClient(client, channelsDomains, db)
 	}
 }
@@ -62,6 +64,7 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 func handleClient(client *communication.Client, channelsDomains *ChannelsDomains, db *gorm.DB) {
 	remoteAddr := client.Connection.RemoteAddr()
 
+	defer metrics.Metrics.TunActiveConnection.Dec()
 	defer client.Connection.Close()
 	defer log.Trace().Msgf("Connection closed with %v", remoteAddr)
 

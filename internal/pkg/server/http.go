@@ -8,14 +8,18 @@ import (
 	"moon/internal/pkg/server/api"
 	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/server/database"
+	"moon/internal/pkg/server/metrics"
 
 	"gorm.io/gorm"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
 func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	tunHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metrics.Metrics.TunHttpRequestTotal.Inc()
 		handleTunnelRequest(w, r, channelsPerDomain, db)
 	})
 
@@ -23,6 +27,9 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 	apiMux := api.NewApiMux(db)
 	topMux.Handle("/api/", middlewareTun(http.StripPrefix("/api", apiMux), tunHandler))
 	topMux.HandleFunc("/", tunHandler)
+
+	// prometheus metrics
+	topMux.Handle("/metrics", promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}))
 
 	fullAddrFmt := fmt.Sprintf("%v:%v", config.GlobalConfig.App.HttpAddr, config.GlobalConfig.App.HttpPort)
 	log.Info().Msgf("HTTP server is up at %v", fullAddrFmt)
@@ -33,6 +40,7 @@ func httpServe(channelsPerDomain *ChannelsDomains, db *gorm.DB) error {
 func middlewareTun(api http.Handler, tun http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Host == config.GlobalConfig.App.GlobalDomainName {
+			metrics.Metrics.ApiHttpRequestTotal.Inc()
 			api.ServeHTTP(w, r)
 		} else {
 			tun.ServeHTTP(w, r)
