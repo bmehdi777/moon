@@ -21,6 +21,13 @@ const (
 	DRIVER_POSTGRES DatabaseDriver = "postgres"
 )
 
+type EnvConfig string
+
+const (
+	ENV_DEBUG EnvConfig = "debug"
+	ENV_PROD  EnvConfig = "prod"
+)
+
 type AppConfig struct {
 	CertKeyPath string `mapstructure:"cert_key"`
 	CertPemPath string `mapstructure:"cert_pub"`
@@ -64,6 +71,7 @@ type RealmConfig struct {
 }
 
 type Config struct {
+	Env      EnvConfig      `mapstructure:"env"`
 	App      AppConfig      `mapstructure:"app"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Auth     AuthConfig     `mapstructure:"auth"`
@@ -75,6 +83,7 @@ var GlobalConfig Config
 
 func InitConfig() {
 	GlobalConfig = Config{
+		Env: ENV_DEBUG,
 		App: AppConfig{
 			CertKeyPath: "./assets/server/certs/server.key",
 			CertPemPath: "./assets/server/certs/server.pem",

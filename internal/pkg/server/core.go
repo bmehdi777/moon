@@ -60,15 +60,17 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 }
 
 func handleClient(client *communication.Client, channelsDomains *ChannelsDomains, db *gorm.DB) {
+	remoteAddr := client.Connection.RemoteAddr()
+
 	defer client.Connection.Close()
-	defer log.Trace().Msgf("Connection closed with %v", client.Connection.RemoteAddr())
+	defer log.Trace().Msgf("Connection closed with %v", remoteAddr)
 
 	// create random domain name
 	channelsName, err := createOrSelectChannelForUser(client, channelsDomains, db)
 	if err != nil {
 		if errors.Is(err, ErrInvalidToken) {
 			// drop connection
-			log.Warn().Msgf("Invalid token from %v", client.Connection.RemoteAddr())
+			log.Warn().Msgf("Invalid token from %v", remoteAddr)
 			return
 		}
 		log.Error().Stack().Err(err).Msg("Error while creating channels")
@@ -89,7 +91,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 		db.Save(&record)
 	}()
 
-	log.Info().Msgf("Connection started with %v", client.Connection.RemoteAddr())
+	log.Info().Msgf("Connection started with %v", remoteAddr)
 	var reply *http.Request
 	readChan := make(chan *communication.Packet)
 
@@ -97,8 +99,11 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 		for {
 			responsePacket, err := client.Read()
 			if err != nil {
-				if err != io.EOF {
-					log.Fatal().Stack().Err(err).Msgf("Error while reading response from %v", client.Connection.RemoteAddr())
+				if errors.Is(err, net.ErrClosed) {
+					return
+				}
+				if !errors.Is(err, io.EOF) {
+					log.Fatal().Stack().Err(err).Msgf("Error while reading response from %v", remoteAddr)
 				}
 				continue
 			}
@@ -106,8 +111,17 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 		}
 	}()
 
+	// Start the watchdog timer :
+	// if no ping/heartbeat while an amount of time
+	// we close the connection
+	client.Watchdog.Timer = *time.NewTimer(communication.WATCHDOG_TIME)
+
 	for {
 		select {
+		case <-client.Watchdog.Timer.C:
+			log.Warn().Msgf("Connection closed due to inactivity for the following user %v", remoteAddr)
+			// close connection
+			return
 		case reply = <-channels.RequestChannel:
 			var buf bytes.Buffer
 			err := reply.Write(&buf)
@@ -120,14 +134,17 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			// redirecting HTTP request to TCP connection
 			err = client.SendHttpRequest(bufBytes)
 			if err != nil {
-				log.Fatal().Stack().Err(err).Msgf("Error while sending bytes to %v", client.Connection.RemoteAddr())
+				log.Fatal().Stack().Err(err).Msgf("Error while sending bytes to %v", remoteAddr)
 				return
 			}
 		case response := <-readChan:
+			log.Info().Msgf("Message received : %v", response.Header.Type)
 			switch response.Header.Type {
 			case communication.ConnectionClose:
 				return
 			case communication.Ping:
+				log.Trace().Msgf("Ping received for %v", remoteAddr)
+				client.Watchdog.Timer.Reset(communication.WATCHDOG_TIME)
 				err = client.SendPong()
 				if err != nil {
 					log.Fatal().Stack().Err(err).Msg("Error while responding to ping")

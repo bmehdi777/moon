@@ -4,14 +4,28 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"time"
 )
 
+type WatchdogAction string
+
+const (
+	WD_RESET WatchdogAction = "reset"
+)
+const WATCHDOG_TIME = 10 * time.Second
+
+type Watchdog struct {
+	Timer  time.Timer
+	Action chan WatchdogAction
+}
+
 type Client struct {
-	Connection *tls.Conn
+	Connection       *tls.Conn
+	Watchdog         *Watchdog
 }
 
 func NewClient(conn *tls.Conn) *Client {
-	return &Client{Connection: conn}
+	return &Client{Connection: conn, Watchdog: &Watchdog{}}
 }
 
 func (c *Client) Read() (*Packet, error) {

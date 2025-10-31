@@ -18,6 +18,7 @@ import (
 	"moon/internal/pkg/agent/cmd/auth"
 	"moon/internal/pkg/agent/files"
 	"moon/internal/pkg/communication"
+	"moon/internal/pkg/server/config"
 	"moon/internal/pkg/utils"
 )
 
@@ -28,8 +29,14 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL, statistics *Stat
 	}
 
 	// TODO: needed to be changed in prod environment
-	config := tls.Config{InsecureSkipVerify: true}
-	conn, err := tls.Dial("tcp", serverAddrPort, &config)
+	var tlsConfig tls.Config
+	if config.GlobalConfig.Env == config.ENV_PROD {
+		tlsConfig = tls.Config{InsecureSkipVerify: false}
+	} else {
+		tlsConfig = tls.Config{InsecureSkipVerify: true}
+	}
+
+	conn, err := tls.Dial("tcp", serverAddrPort, &tlsConfig)
 	if err != nil {
 		return errors.New("Can't connect to the server : " + err.Error())
 	}
