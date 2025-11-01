@@ -20,8 +20,8 @@ type Watchdog struct {
 }
 
 type Client struct {
-	Connection       *tls.Conn
-	Watchdog         *Watchdog
+	Connection *tls.Conn
+	Watchdog   *Watchdog
 }
 
 func NewClient(conn *tls.Conn) *Client {
@@ -113,8 +113,9 @@ func (c *Client) SendPong() error {
 	return nil
 }
 
-func (c *Client) SendHttpRequest(data []byte) error {
-	packet := NewPacket(HttpRequest, data)
+func (c *Client) SendHttpRequest(url string, data []byte) error {
+	httpReqMsg := NewHttpRequestMessage(url, data)
+	packet := NewPacket(HttpRequest, httpReqMsg.Bytes())
 	err := c.Write(packet)
 	if err != nil {
 		return err

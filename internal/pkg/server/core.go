@@ -135,13 +135,13 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			bufBytes := buf.Bytes()
 
 			// redirecting HTTP request to TCP connection
-			err = client.SendHttpRequest(bufBytes)
+			err = client.SendHttpRequest(channelsName,bufBytes)
 			if err != nil {
 				log.Fatal().Stack().Err(err).Msgf("Error while sending bytes to %v", remoteAddr)
 				return
 			}
 		case response := <-readChan:
-			log.Info().Msgf("Message received : %v", response.Header.Type)
+			log.Debug().Msgf("Message received : %v", response.Header.Type)
 			switch response.Header.Type {
 			case communication.ConnectionClose:
 				return
@@ -161,6 +161,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 					log.Fatal().Stack().Err(err).Msg("Error while converting bytes to HTTP response")
 					return
 				}
+
 				reply = nil
 				channels.ResponseChannel <- resp
 			default:

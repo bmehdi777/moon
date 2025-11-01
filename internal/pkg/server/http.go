@@ -72,6 +72,15 @@ func handleTunnelRequest(w http.ResponseWriter, r *http.Request, channelsPerDoma
 
 	channel.RequestChannel <- r
 	response := <-channel.ResponseChannel
+
+	// Rewrite header
+	if response.Header.Get("Location") != "" {
+		w.Header().Set("Location", response.Header.Get("Location"))
+	}
+	w.Header().Set("Content-Type", response.Header.Get("Content-Type"))
+	w.Header().Set("Content-Length", response.Header.Get("Content-Length"))
+	w.WriteHeader(response.StatusCode)
+
 	io.Copy(w, response.Body)
 	response.Body.Close()
 }

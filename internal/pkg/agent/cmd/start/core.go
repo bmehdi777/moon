@@ -56,6 +56,9 @@ func connectToServer(serverAddrPort string, urlTarget *url.URL, statistics *Stat
 func handleConnection(client *communication.Client, url *url.URL, statistics *Statistics) error {
 	httpClient := &http.Client{
 		Timeout: time.Minute * 5,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	heartbeat(client)
@@ -78,7 +81,14 @@ func handleConnection(client *communication.Client, url *url.URL, statistics *St
 
 			messageLocalApi := &HttpMessage{}
 
-			req, resp, reqDuration, err := sendRequestToTarget(packetRequest, url, httpClient, messageLocalApi)
+			httpReqMsg := communication.BytesToHttpRequestMessage(packetRequest.Payload.Data)
+
+			req, resp, reqDuration, err := sendRequestToTarget(httpReqMsg, url, httpClient, messageLocalApi)
+			if err != nil {
+				return err
+			}
+
+			// response location should swap serverUrl with urlTarget
 
 			var buf bytes.Buffer
 			err = resp.Write(&buf)
@@ -103,9 +113,9 @@ func handleConnection(client *communication.Client, url *url.URL, statistics *St
 	}
 }
 
-func sendRequestToTarget(packetRequest *communication.Packet, url *url.URL, httpClient *http.Client, message *HttpMessage) (*http.Request, *http.Response, *time.Duration, error) {
+func sendRequestToTarget(httpReqMsg *communication.HttpRequestMessage, url *url.URL, httpClient *http.Client, message *HttpMessage) (*http.Request, *http.Response, *time.Duration, error) {
 	// parse binary packet to http request
-	reader := bytes.NewReader(packetRequest.Payload.Data)
+	reader := bytes.NewReader(httpReqMsg.Data)
 	reqBufio := bufio.NewReader(reader)
 	req, err := http.ReadRequest(reqBufio)
 	if err != nil {
@@ -113,6 +123,7 @@ func sendRequestToTarget(packetRequest *communication.Packet, url *url.URL, http
 	}
 
 	req.URL.Host = url.Host
+	req.Host = url.Host
 	req.URL.Scheme = url.Scheme
 	req.RequestURI = ""
 
@@ -140,6 +151,14 @@ func sendRequestToTarget(packetRequest *communication.Packet, url *url.URL, http
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	// redirection swap location
+	switch resp.StatusCode {
+	case 301, 302, 303, 307, 308:
+		location := resp.Header.Get("Location")
+		location = strings.Replace(location, url.Host, httpReqMsg.Url, -1)
+		resp.Header.Set("Location", location)
 	}
 
 	requestDuration := time.Since(start)

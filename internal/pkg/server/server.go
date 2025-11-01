@@ -13,6 +13,8 @@ import (
 func Run() {
 	config.InitConfig()
 
+	configureLogger()
+
 	db, err := database.InitializeDBConn()
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("Can't connect to the database.")
@@ -32,4 +34,5 @@ func Run() {
 
 func configureLogger() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 }
