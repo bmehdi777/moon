@@ -1,4 +1,5 @@
-FROM golang:1.23
+# build
+FROM golang:1.23 AS build-stage
 
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -6,12 +7,19 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY cmd/server/ ./cmd/server
-COPY internal/pkg/messages/ ./internal/pkg/messages
+COPY internal/pkg/communication/ ./internal/pkg/communication
 COPY internal/pkg/server/ ./internal/pkg/server
 
-RUN GOOS=linux go build -o /moon-server ./cmd/server/main.go
+RUN GOOS=linux go build -o ./server ./cmd/server/main.go
+
+# release
+FROM debian:stable-slim AS release-stage
+
+WORKDIR /
+
+COPY --from=build-stage /app/server /server
 
 EXPOSE 8080
 EXPOSE 4040
 
-CMD ["/moon-server"]
+CMD ["/server"]

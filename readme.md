@@ -28,6 +28,14 @@ A binary named `moon-agent` will be located in the `build/` folder.
 > This project use `keycloak` to authenticate users. You will need to install it
 > on your own or use the `compose.yml` file
 
+#### Configuration
+
+Configuration are read from `config.yml` file. The server search for file at the 
+following location : 
+* `/etc/moon/config.yml`
+* `$HOME/.config/moon/config.yml`
+* `$(pwd)/config.yml`
+
 #### Docker
 
 The server image can be build manually :
