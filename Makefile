@@ -21,12 +21,10 @@ build-rpi:
 build-kc-theme:
 	npm run build-keycloak-theme --prefix keycloak/themes/moon-theme
 
-run: run-agent run-server
+run: run-server
 
-run-agent: build-agent
-	./build/moon-agent
-run-server: build-server
-	./build/moon-server
+run-server: 
+	go tool air -c .air.server.toml 
 run-api-test:
 	./build/api-test
 
