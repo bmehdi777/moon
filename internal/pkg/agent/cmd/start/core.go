@@ -122,8 +122,12 @@ func sendRequestToTarget(httpReqMsg *communication.HttpRequestMessage, url *url.
 		return nil, nil, nil, err
 	}
 
+	// this must change, req.host is the url of the current host (this agent acting
+	// as a proxy)
+	// Whereas req.url.host is the target host
 	req.URL.Host = url.Host
 	req.Host = url.Host
+
 	req.URL.Scheme = url.Scheme
 	req.RequestURI = ""
 
