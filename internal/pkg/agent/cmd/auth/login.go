@@ -1,6 +1,10 @@
 package auth
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
 
 func NewCmdLogin() *cobra.Command {
 	loginCmd := cobra.Command{
@@ -9,13 +13,19 @@ func NewCmdLogin() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run:   handlerLogin,
 	}
+	loginCmd.Flags().String("auth-server", BASE_URL_KEYCLOAK, "Keycloak server URL")
 
 	return &loginCmd
 }
 
 func handlerLogin(cmd *cobra.Command, args []string) {
+	authServer, err := cmd.Flags().GetString("auth-server")
+	if err != nil {
+		fmt.Println("Can't read auth server: ", err)
+		return
+	}
 	//accessToken := oidcTokenFlow(false)
-	oidcTokenFlow(false)
+	oidcTokenFlow(authServer, false)
 
 	// it should have a refresh token (offline token)
 	// store it

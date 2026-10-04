@@ -19,6 +19,7 @@ type TokenDisk struct {
 	AccessTokenExpire  int64  `json:"at_exp"`
 	RefreshToken       string `json:"rt"`
 	RefreshTokenExpire int64  `json:"rt_exp"`
+	AuthServer         string `json:"auth_server,omitempty"`
 }
 
 func (k *KeycloakJWTS) ToDisk() *TokenDisk {

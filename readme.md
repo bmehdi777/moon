@@ -90,7 +90,7 @@ auth:
 - Launch the docker compose : docker compose up
 - Launch the server : ./build/moon-server
 - Launch the api test : ./build/api-test
-- Login with the agent : ./build/moon-agent login
+- Login with the agent : ./build/moon-agent login --auth-server http://localhost:8081
 - Launch the agent : ./build/moon-agent start http://localhost:5000
 
 ## TODO
@@ -98,4 +98,3 @@ auth:
 - Complete this readme : `docker run ...` isn't complete (which port open ? which env variable ? etc.)
 - Explain how everything works (excalidraw architecture)
 - Found logo
-

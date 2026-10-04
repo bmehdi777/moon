@@ -233,7 +233,11 @@ func prepareAuth() (*auth.TokenDisk, error) {
 	if n.After(atExpTimestamp) && n.After(rtExpTimestamp) {
 		return nil, errors.New("Your session expired. Use 'moon login' to start a new session.")
 	} else if n.After(atExpTimestamp) && n.Before(rtExpTimestamp) {
-		refreshed, err := auth.RefreshToken(tokensCached.RefreshToken)
+		authServer := tokensCached.AuthServer
+		if authServer == "" {
+			authServer = auth.BASE_URL_KEYCLOAK
+		}
+		refreshed, err := auth.RefreshToken(authServer, tokensCached.RefreshToken)
 		if err != nil {
 			return nil, fmt.Errorf("can't refresh access token: %w", err)
 		}

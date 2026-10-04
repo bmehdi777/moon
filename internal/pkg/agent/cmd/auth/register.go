@@ -23,10 +23,10 @@ func NewCmdRegister() *cobra.Command {
 const BASE_API_URL = "http://m00n.fr"
 
 func handlerRegister(cmd *cobra.Command, args []string) {
-	accessToken := oidcTokenFlow(true)
+	accessToken := oidcTokenFlow(BASE_URL_KEYCLOAK, true)
 	client := &http.Client{}
 
-	req, err := http.NewRequest("POST", BASE_API_URL + "/api/users", nil)
+	req, err := http.NewRequest("POST", BASE_API_URL+"/api/users", nil)
 	if err != nil {
 		fmt.Println("An error occured while creating the POST request to /user", err)
 		os.Exit(1)

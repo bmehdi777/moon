@@ -1,6 +1,24 @@
 name: "moon"
 
 services:
+  traefik:
+    image: traefik:v3.3
+    container_name: moon_traefik
+    network_mode: host
+    restart: unless-stopped
+    command:
+      - --entrypoints.websecure.address=:443
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.file.watch=true
+      - --certificatesresolvers.letsencrypt.acme.email=admin@m00n.fr
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --log.level=INFO
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/acme.json:/letsencrypt/acme.json
+
   keycloak_web:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak_web

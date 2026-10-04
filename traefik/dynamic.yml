@@ -1,0 +1,15 @@
+http:
+  routers:
+    moon:
+      entryPoints:
+        - websecure
+      rule: Host(`m00n.fr`) || HostRegexp(`^.+\.m00n\.fr$`)
+      service: moon
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    moon:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:8080
