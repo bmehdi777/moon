@@ -55,7 +55,13 @@ func tcpServe(channelsDomains *ChannelsDomains, db *gorm.DB) {
 			tcpConn.SetKeepAlivePeriod(1 * time.Hour)
 		}
 
-		client := communication.NewClient(conn.(*tls.Conn))
+		tlsConn, ok := conn.(*tls.Conn)
+		if !ok {
+			log.Error().Msg("Accepted connection is not a TLS connection")
+			conn.Close()
+			continue
+		}
+		client := communication.NewClient(tlsConn)
 		metrics.Metrics.TunActiveConnection.Inc()
 		go handleClient(client, channelsDomains, db)
 	}
@@ -82,7 +88,7 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 
 	channels := channelsDomains.Get(channelsName)
 	if channels == nil {
-		log.Fatal().Msg("Error while retrieving channel")
+		log.Error().Msg("Error while retrieving channel")
 		return
 	}
 
@@ -106,9 +112,9 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 					return
 				}
 				if !errors.Is(err, io.EOF) {
-					log.Fatal().Stack().Err(err).Msgf("Error while reading response from %v", remoteAddr)
+					log.Error().Stack().Err(err).Msgf("Error while reading response from %v", remoteAddr)
 				}
-				continue
+				return
 			}
 			readChan <- responsePacket
 		}
@@ -129,18 +135,21 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 			var buf bytes.Buffer
 			err := reply.Write(&buf)
 			if err != nil {
-				log.Fatal().Stack().Err(err).Msg("Error while writing request to wire")
+				log.Error().Stack().Err(err).Msg("Error while writing request to wire")
 				return
 			}
 			bufBytes := buf.Bytes()
 
 			// redirecting HTTP request to TCP connection
-			err = client.SendHttpRequest(channelsName,bufBytes)
+			err = client.SendHttpRequest(channelsName, bufBytes)
 			if err != nil {
-				log.Fatal().Stack().Err(err).Msgf("Error while sending bytes to %v", remoteAddr)
+				log.Error().Stack().Err(err).Msgf("Error while sending bytes to %v", remoteAddr)
 				return
 			}
 		case response := <-readChan:
+			if response == nil {
+				return
+			}
 			log.Debug().Msgf("Message received : %v", response.Header.Type)
 			switch response.Header.Type {
 			case communication.ConnectionClose:
@@ -150,15 +159,19 @@ func handleClient(client *communication.Client, channelsDomains *ChannelsDomains
 				client.Watchdog.Timer.Reset(communication.WATCHDOG_TIME)
 				err = client.SendPong()
 				if err != nil {
-					log.Fatal().Stack().Err(err).Msg("Error while responding to ping")
+					log.Error().Stack().Err(err).Msg("Error while responding to ping")
 					return
 				}
 			case communication.HttpResponse:
+				if reply == nil {
+					log.Warn().Msg("HTTP response received without a pending request")
+					continue
+				}
 				reader := bytes.NewReader(response.Payload.Data)
 				respBufio := bufio.NewReader(reader)
 				resp, err := http.ReadResponse(respBufio, reply)
 				if err != nil {
-					log.Fatal().Stack().Err(err).Msg("Error while converting bytes to HTTP response")
+					log.Error().Stack().Err(err).Msg("Error while converting bytes to HTTP response")
 					return
 				}
 
@@ -188,7 +201,10 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 		return "", err
 	}
 
-	authMsg := msg.(*communication.AuthMessage)
+	authMsg, ok := msg.(*communication.AuthMessage)
+	if !ok || authMsg == nil {
+		return "", fmt.Errorf("invalid authentication message")
+	}
 	accessToken, err := authent.VerifyJwt(authMsg.Token)
 	if err != nil {
 		err = client.SendUnauthorized()
@@ -199,7 +215,9 @@ func createOrSelectChannelForUser(client *communication.Client, channels *Channe
 	}
 
 	// tell client he is connected
-	client.SendAuthorized()
+	if err := client.SendAuthorized(); err != nil {
+		return "", err
+	}
 
 	sub, err := accessToken.Claims.GetSubject()
 	if err != nil {

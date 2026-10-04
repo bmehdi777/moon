@@ -83,22 +83,30 @@ func (hrm *HttpRequestMessage) Bytes() []byte {
 	return msg
 }
 
-func BytesToHttpRequestMessage(rawBytes []byte) *HttpRequestMessage {
+func BytesToHttpRequestMessage(rawBytes []byte) (*HttpRequestMessage, error) {
+	if len(rawBytes) < 4 {
+		return nil, fmt.Errorf("HTTP request message is truncated")
+	}
 	urlLength := binary.BigEndian.Uint32(rawBytes[0:4])
-	urlOffset:= 4 + urlLength
+	urlOffset := uint64(4) + uint64(urlLength)
+	if urlOffset+4 > uint64(len(rawBytes)) {
+		return nil, fmt.Errorf("HTTP request URL length is invalid")
+	}
 	url := rawBytes[4:urlOffset]
 
-	dataLength := binary.BigEndian.Uint32(rawBytes[urlOffset:urlOffset+4])
-	dataOffset := urlOffset + 4 +dataLength
-	data := rawBytes[urlOffset+4:dataOffset]
-
+	dataLength := binary.BigEndian.Uint32(rawBytes[urlOffset : urlOffset+4])
+	dataOffset := urlOffset + 4 + uint64(dataLength)
+	if dataOffset != uint64(len(rawBytes)) {
+		return nil, fmt.Errorf("HTTP request body length is invalid")
+	}
+	data := rawBytes[urlOffset+4 : dataOffset]
 
 	return &HttpRequestMessage{
-		UrlLength: urlLength,
-		Url: string(url),
+		UrlLength:  urlLength,
+		Url:        string(url),
 		DataLength: dataLength,
-		Data: data,
-	}
+		Data:       data,
+	}, nil
 }
 
 // Authentication messge contains the token to ensure the client
@@ -125,10 +133,17 @@ func (am *AuthMessage) Bytes() []byte {
 
 	return msg
 }
-func bytesToAuthMessage(rawBytes []byte) *AuthMessage {
+
+func bytesToAuthMessage(rawBytes []byte) (*AuthMessage, error) {
+	if len(rawBytes) < 4 {
+		return nil, fmt.Errorf("authentication message is truncated")
+	}
 	tokenLength := binary.BigEndian.Uint32(rawBytes[0:4])
 
-	offset := 4 + tokenLength
+	offset := uint64(4) + uint64(tokenLength)
+	if offset != uint64(len(rawBytes)) {
+		return nil, fmt.Errorf("authentication token length is invalid")
+	}
 
 	token := rawBytes[4:offset]
 
@@ -136,5 +151,5 @@ func bytesToAuthMessage(rawBytes []byte) *AuthMessage {
 		tokenLength,
 
 		string(token),
-	}
+	}, nil
 }

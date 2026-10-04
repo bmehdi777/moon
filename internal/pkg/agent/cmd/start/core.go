@@ -81,7 +81,10 @@ func handleConnection(client *communication.Client, url *url.URL, statistics *St
 
 			messageLocalApi := &HttpMessage{}
 
-			httpReqMsg := communication.BytesToHttpRequestMessage(packetRequest.Payload.Data)
+			httpReqMsg, err := communication.BytesToHttpRequestMessage(packetRequest.Payload.Data)
+			if err != nil {
+				return fmt.Errorf("invalid HTTP request packet: %w", err)
+			}
 
 			req, resp, reqDuration, err := sendRequestToTarget(httpReqMsg, url, httpClient, messageLocalApi)
 			if err != nil {
@@ -230,7 +233,25 @@ func prepareAuth() (*auth.TokenDisk, error) {
 	if n.After(atExpTimestamp) && n.After(rtExpTimestamp) {
 		return nil, errors.New("Your session expired. Use 'moon login' to start a new session.")
 	} else if n.After(atExpTimestamp) && n.Before(rtExpTimestamp) {
-		// TODO: here we should ask another access token with the refresh token
+		refreshed, err := auth.RefreshToken(tokensCached.RefreshToken)
+		if err != nil {
+			return nil, fmt.Errorf("can't refresh access token: %w", err)
+		}
+		if refreshed.AccessToken == "" || refreshed.Expiry.IsZero() {
+			return nil, errors.New("Keycloak returned an invalid refreshed token")
+		}
+		tokensCached.AccessToken = refreshed.AccessToken
+		tokensCached.AccessTokenExpire = refreshed.Expiry.Unix()
+		if refreshed.RefreshToken != "" {
+			tokensCached.RefreshToken = refreshed.RefreshToken
+		}
+		updated, err := json.Marshal(&tokensCached)
+		if err != nil {
+			return nil, fmt.Errorf("can't serialize refreshed session: %w", err)
+		}
+		if err := files.SaveToConfigFile(files.AUTH_FILENAME, updated); err != nil {
+			return nil, fmt.Errorf("can't save refreshed session: %w", err)
+		}
 	}
 	return &tokensCached, nil
 }

@@ -23,8 +23,15 @@ func oidcTokenFlow(register bool) string {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		fmt.Println("Can't open server : ", err)
+		return ""
 	}
-	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+	defer listener.Close()
+	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		fmt.Println("Can't determine callback port")
+		return ""
+	}
+	port := strconv.Itoa(tcpAddr.Port)
 
 	codeVerifier := oauth2.GenerateVerifier()
 	codeChallenge := oauth2.S256ChallengeFromVerifier(codeVerifier)
@@ -32,6 +39,7 @@ func oidcTokenFlow(register bool) string {
 	authCode, err := getAuthorizationCode(listener, port, codeChallenge, register)
 	if err != nil {
 		fmt.Println("An error occured : ", err)
+		return ""
 	}
 
 	tokenResponse, err := getToken(authCode, codeVerifier, "http://127.0.0.1:"+port)
@@ -58,7 +66,6 @@ func oidcTokenFlow(register bool) string {
 	if err != nil {
 		fmt.Println("Can't save authentification data to disk : ", err)
 	}
-
 
 	return keycloakJWT.AccessToken
 }
@@ -112,6 +119,13 @@ func getToken(authCode string, verifier string, callbackUri string) ([]byte, err
 		return nil, err
 	}
 	defer res.Body.Close()
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		body, readErr := io.ReadAll(res.Body)
+		if readErr != nil {
+			return nil, fmt.Errorf("Keycloak token request failed with status %s: %w", res.Status, readErr)
+		}
+		return nil, fmt.Errorf("Keycloak token request failed with status %s: %s", res.Status, strings.TrimSpace(string(body)))
+	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -119,6 +133,30 @@ func getToken(authCode string, verifier string, callbackUri string) ([]byte, err
 	}
 
 	return body, nil
+}
+
+func doRefreshToken(refreshToken string) (*oauth2.Token, error) {
+	if refreshToken == "" {
+		return nil, fmt.Errorf("refresh token is empty")
+	}
+	endpoint := oauth2.Endpoint{TokenURL: BASE_URL_KEYCLOAK + "/realms/moon/protocol/openid-connect/token"}
+	config := oauth2.Config{ClientID: "moon-agent", Endpoint: endpoint}
+	token, err := config.TokenSource(context.Background(), &oauth2.Token{RefreshToken: refreshToken}).Token()
+	if err != nil {
+		return nil, err
+	}
+	if token.AccessToken == "" {
+		return nil, fmt.Errorf("Keycloak returned an empty access token")
+	}
+	if token.RefreshToken == "" {
+		token.RefreshToken = refreshToken
+	}
+	return token, nil
+}
+
+// RefreshToken exchanges a cached refresh token for a new access token.
+func RefreshToken(refreshToken string) (*oauth2.Token, error) {
+	return doRefreshToken(refreshToken)
 }
 
 func createAuthUri(challenge string, port string, register bool) string {

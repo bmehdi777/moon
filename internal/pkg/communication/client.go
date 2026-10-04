@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"io"
 	"time"
 )
 
@@ -22,42 +23,30 @@ type Watchdog struct {
 type Client struct {
 	Connection *tls.Conn
 	Watchdog   *Watchdog
+	reader     *bufio.Reader
 }
 
 func NewClient(conn *tls.Conn) *Client {
-	return &Client{Connection: conn, Watchdog: &Watchdog{}}
+	return &Client{Connection: conn, Watchdog: &Watchdog{}, reader: bufio.NewReader(conn)}
 }
 
 func (c *Client) Read() (*Packet, error) {
-	// determine header size
-	reader := bufio.NewReader(c.Connection)
-	headerBytes, err := reader.Peek(int(HEADER_SIZE))
-	if err != nil {
+	headerBytes := make([]byte, HEADER_SIZE)
+	if _, err := io.ReadFull(c.reader, headerBytes); err != nil {
 		return nil, err
 	}
-
 	header, err := HeaderFromBytes(headerBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	var bytesReceived int
-	length := uint64(HEADER_SIZE) + header.LenData
-	buffer := bytes.NewBuffer(nil)
-
-	for {
-		chunk := make([]byte, READ_BUFFER_SIZE)
-		read, err := reader.Read(chunk)
-		if err != nil {
+	buffer := bytes.NewBuffer(headerBytes)
+	if header.LenData > 0 {
+		payload := make([]byte, int(header.LenData))
+		if _, err := io.ReadFull(c.reader, payload); err != nil {
 			return nil, err
 		}
-
-		bytesReceived += read
-		buffer.Write(chunk[:read])
-
-		if buffer.Len() == int(length) {
-			break
-		}
+		buffer.Write(payload)
 	}
 
 	packet, err := PacketFromBytes(buffer.Bytes())

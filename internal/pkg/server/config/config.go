@@ -169,7 +169,7 @@ func verifyDatabase() {
 func getPublicKey() RealmConfig {
 	response, err := http.Get(GlobalConfig.Auth.BaseURL + "/realms/" + GlobalConfig.Auth.Realm)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%v", err)
 	}
 	if response.StatusCode != 200 {
 		log.Fatalf("Error : Keycloak %v", response.Status)
@@ -178,13 +178,13 @@ func getPublicKey() RealmConfig {
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%v", err)
 	}
 
 	var realmConfig RealmConfig
 	err = json.Unmarshal(body, &realmConfig)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%v", err)
 	}
 
 	return realmConfig

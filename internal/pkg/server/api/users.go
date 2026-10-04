@@ -29,7 +29,12 @@ func (a *User) register(w http.ResponseWriter, r *http.Request) {
 	defer log.Trace().Msg("End register")
 
 	bearerToken := r.Header.Get("Authorization")
-	jwtString := strings.Fields(bearerToken)[1]
+	fields := strings.Fields(bearerToken)
+	if len(fields) != 2 || !strings.EqualFold(fields[0], "Bearer") || fields[1] == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	jwtString := fields[1]
 
 	jwt, err := authent.VerifyJwt(jwtString)
 	if err != nil {

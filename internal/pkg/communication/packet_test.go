@@ -70,3 +70,29 @@ func TestIncompatibleVersion(t *testing.T) {
 		t.Fatalf("An error should have been thrown")
 	}
 }
+
+func TestPacketFromBytesRejectsTruncatedInput(t *testing.T) {
+	for _, rawPacket := range [][]byte{nil, {1}, {1, 0, 0, 0, 0}} {
+		if _, err := communication.PacketFromBytes(rawPacket); err == nil {
+			t.Fatalf("expected truncated packet to be rejected: %v", rawPacket)
+		}
+	}
+}
+
+func TestPacketFromBytesRejectsInvalidPayloadLength(t *testing.T) {
+	rawPacket := []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1}
+	if _, err := communication.PacketFromBytes(rawPacket); err == nil {
+		t.Fatal("expected packet with truncated payload to be rejected")
+	}
+}
+
+func TestMessageDecodersRejectMalformedInput(t *testing.T) {
+	if _, err := communication.BytesToHttpRequestMessage([]byte{0, 0, 0}); err == nil {
+		t.Fatal("expected malformed HTTP request message to be rejected")
+	}
+
+	packet := communication.NewPacket(communication.ConnectionStart, []byte{0, 0, 0})
+	if _, err := packet.Message(); err == nil {
+		t.Fatal("expected malformed authentication message to be rejected")
+	}
+}
